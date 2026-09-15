@@ -1,0 +1,1839 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Min Økonomi</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f7fb;color:#172033;margin:0}
+header{background:#fff;padding:16px 20px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.logo{font-size:22px;font-weight:bold}.logo span{color:#315efb}nav{display:flex;gap:5px}.tab{background:white;color:#687080}.tab.active{background:#eef2ff;color:#2448c9}
+main{max-width:1150px;margin:25px auto;padding:0 18px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.card{background:white;border:1px solid #e4e7ed;border-radius:15px;padding:18px;margin-top:18px}.value{font-size:28px;font-weight:bold;margin-top:7px}
+.income{color:#18864b}.expense{color:#d94b61}.balance{color:#315efb}.muted,small{color:#687080}
+button{border:0;border-radius:9px;padding:9px 13px;font-weight:bold;cursor:pointer;background:#315efb;color:white}
+button.secondary{background:#eef2ff;color:#2448c9}button.danger{background:#fff0f2;color:#b72f45}button.ghost{background:#f1f3f7;color:#46505f}
+.hide{display:none}table{width:100%;border-collapse:collapse}th,td{padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
+th{font-size:13px;color:#687080}.actions{display:flex;gap:5px}.modal{display:none;position:fixed;inset:0;background:#0006;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.open{display:flex}.dialog{background:white;border-radius:16px;padding:22px;width:min(480px,100%);max-height:90vh;overflow:auto}
+label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
+.actions2{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.progress{height:11px;background:#edf0f5;border-radius:20px;overflow:hidden;margin:10px 0}
+.bar{height:100%;background:#315efb}.bar.over{background:#d94b61}.row{padding:13px 0;border-bottom:1px solid #eee}.rowtop{display:flex;justify-content:space-between;gap:10px}
+.account{display:inline-block;background:#f1f3f7;border-radius:8px;padding:3px 7px;font-size:12px}.chartwrap{width:100%;overflow:auto}.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.legend span{font-size:13px}.empty{text-align:center;padding:25px;color:#687080}
+.bankgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.bankcard{border:1px solid #e5e7eb;border-radius:12px;padding:15px}.bankcard h3{margin:0 0 5px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}header{align-items:flex-start}}
+
+.data-model{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:12px}
+.data-model>div{padding:11px;border:1px solid rgba(0,0,0,.1);border-radius:10px}
+.data-model small{display:block;opacity:.7;margin-top:3px}
+
+.currency-box{margin:8px 0 12px;padding:10px 12px;border:1px solid #d7dde5;border-radius:10px;background:#f7f8fa;font-size:.95rem}.currency-box strong{font-size:1.05rem}.dialog select,.dialog input{box-sizing:border-box}
+</style>
+
+<style>
+.breakdown{display:flex;flex-direction:column;gap:10px}
+.break-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid rgba(127,127,127,.18)}
+.break-row.total{font-size:1.08rem;border-bottom:0;padding-top:16px}
+</style>
+
+
+<style>
+.scenario-result,.result-box{padding:16px;border-radius:14px;background:rgba(127,127,127,.08);min-height:100px}
+.scenario-number{font-size:2rem;font-weight:800;margin-bottom:8px}
+</style>
+
+
+<style>
+.calendar-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal-weekday{text-align:center;font-weight:700;padding:8px 2px}
+.cal-empty{min-height:92px}
+.cal-day{min-height:92px;border:1px solid rgba(127,127,127,.18);border-radius:10px;padding:6px;overflow:hidden}
+.cal-date{font-weight:800;margin-bottom:4px}
+.cal-entry{font-size:.72rem;line-height:1.2;border-radius:6px;padding:4px;margin:3px 0;overflow:hidden}
+.cal-entry span{opacity:.8;white-space:nowrap}
+.cal-entry.income{font-weight:600}
+.cal-entry.expense{font-weight:600}
+.cal-entry.bill{font-weight:600}
+@media(max-width:700px){
+  .calendar-grid{gap:3px}.cal-day{min-height:75px;padding:4px}.cal-entry{font-size:.62rem}
+}
+</style>
+
+
+<style>
+.forecast-chart-wrap{width:100%;overflow-x:auto}
+#forecastCanvas{width:100%;height:auto;display:block}
+.forecast-table{display:flex;flex-direction:column}
+.frow{display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:10px;padding:10px 0;border-bottom:1px solid rgba(127,127,127,.18)}
+.fhead{font-weight:800}
+.alert-box,.good-box{padding:12px;border-radius:10px;background:rgba(127,127,127,.1);margin-top:10px}
+</style>
+
+
+<style>
+.insight{padding:12px 0;border-bottom:1px solid rgba(127,127,127,.18);line-height:1.5}
+.insight:last-child{border-bottom:0}
+</style>
+
+
+<style>
+.status-box{padding:4px 0}
+.status-good,.status-warn,.status-alert{padding:16px;border-radius:14px;background:rgba(127,127,127,.10)}
+.status-good strong,.status-warn strong,.status-alert strong{font-size:1.1rem}
+.status-box p{margin:8px 0 0}
+.dash-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(127,127,127,.18)}
+.goal-mini{margin:12px 0}
+.goal-mini>div:first-child{display:flex;justify-content:space-between;gap:10px}
+.progress-track{height:8px;background:rgba(127,127,127,.18);border-radius:99px;overflow:hidden;margin:7px 0 4px}
+.progress-fill{height:100%;background:currentColor;border-radius:99px}
+.goal-mini small{opacity:.7}
+@media(max-width:700px){
+  .cards{grid-template-columns:1fr 1fr}
+  .card .big{font-size:1.25rem}
+  .dash-row{font-size:.9rem}
+}
+</style>
+
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+.mobile-preview{display:flex;justify-content:center;padding:10px 0 24px}
+.phone-frame{width:min(390px,100%);border:8px solid #111;border-radius:32px;padding:18px 16px;box-shadow:0 12px 35px rgba(0,0,0,.16);background:var(--card,#fff)}
+.phone-top{text-align:center;font-weight:800;font-size:1.05rem;padding-bottom:18px}
+.phone-balance{padding:24px 18px;border-radius:20px;background:rgba(127,127,127,.1);text-align:center}
+.phone-balance span{display:block;font-size:.85rem;opacity:.7}.phone-balance strong{display:block;font-size:2rem;margin-top:5px}
+.phone-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.phone-actions button{padding:13px;border-radius:12px;border:1px solid rgba(127,127,127,.25);background:transparent;font-weight:700}
+.phone-card{display:flex;justify-content:space-between;gap:10px;padding:15px 4px;border-bottom:1px solid rgba(127,127,127,.18)}
+.mobile-install{max-width:800px;margin:0 auto}
+.mobile-install li{margin:10px 0}.mobile-install code{background:#f1f3f7;padding:2px 5px;border-radius:5px}
+@media(max-width:700px){
+  body{padding-bottom:72px}
+  .tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;overflow-x:auto;background:rgba(255,255,255,.96);padding:8px;box-shadow:0 -5px 18px rgba(0,0,0,.1)}
+  .tab{white-space:nowrap}
+  .section-head h2{font-size:1.45rem}
+  .panel{padding:14px}
+  .cards{grid-template-columns:1fr 1fr}
+  .card{padding:14px}
+  .card .big{font-size:1.25rem}
+  input,select,button{font-size:16px}
+}
+</style>
+
+
+<style>
+.sync-status{margin:10px 0 14px}
+.sync-good,.sync-neutral{padding:12px;border-radius:10px;background:rgba(127,127,127,.10)}
+.sync-flow{display:flex;align-items:center;justify-content:center;gap:16px;text-align:center;padding:22px 5px}
+.sync-flow>div:not(.arrow){padding:14px;border:1px solid rgba(127,127,127,.22);border-radius:14px;min-width:90px}
+.sync-flow small{opacity:.7}.arrow{font-size:1.5rem}
+@media(max-width:700px){.sync-flow{gap:7px}.sync-flow .arrow{font-size:1.1rem}.sync-flow>div:not(.arrow){min-width:70px;padding:10px 5px}}
+</style>
+
+</head>
+<body>
+<header>
+<div class="logo">Min <span>Økonomi</span></div>
+<nav>
+<button class="tab active" onclick="show('overview',this)">Oversikt</button>
+<button class="tab" onclick="show('accounts',this)">🏦 Banker & kontoer</button>
+<button class="tab" onclick="show('budget',this)">Budsjett</button>
+<button class="tab" onclick="show('savings',this)">Sparemål</button><button class="tab" onclick="show('bills',this)">📅 Regninger</button><button class="tab" onclick="show('analytics',this)">📊 Analyse</button>
+</nav>
+<button onclick="openTx()">+ Legg til</button>
+</header>
+
+<main>
+<div id="overview">
+<h1>Oversikt</h1><p class="muted" id="month"></p>
+<div class="grid">
+<div class="card"><div class="muted">Inntekter denne måneden</div><div class="value income" id="income">0 kr</div></div>
+<div class="card"><div class="muted">Utgifter denne måneden</div><div class="value expense" id="expense">0 kr</div></div>
+<div class="card"><div class="muted">Netto denne måneden</div><div class="value balance" id="balance">0 kr</div></div>
+<div class="card"><div class="muted">Saldo på kontoer</div><div class="value" id="overviewAccountBalance">0 kr</div></div>
+</div>
+<div class="card"><h2>Saldo per konto</h2><div id="accountSummary"></div></div>
+<div class="card"><h2>Forbruk per kategori</h2><div id="cats"></div></div>
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center"><h2>Transaksjoner</h2><button class="secondary" onclick="clearAll()">Tøm data</button></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+<input id="searchTx" placeholder="🔎 Søk i transaksjoner..." style="max-width:260px">
+<select id="filterAccount" style="max-width:220px"><option value="">Alle kontoer</option></select>
+<select id="filterCategory" style="max-width:180px"><option value="">Alle kategorier</option></select>
+<select id="filterType" style="max-width:150px"><option value="">Alle typer</option><option value="income">Inntekt</option><option value="expense">Utgift</option></select>
+</div>
+<div style="overflow:auto"><table><thead><tr><th>Dato</th><th>Beskrivelse</th><th>Kategori</th><th>Bank/konto</th><th>Type</th><th>Beløp</th><th>Handling</th></tr></thead><tbody id="rows"></tbody></table></div>
+</div>
+</div>
+
+<div id="accounts" class="hide">
+<h1>🏦 Banker & kontoer</h1><p class="muted">Her kan du legge inn alle bankene og kontoene dine.</p>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Mine kontoer</h2><button onclick="openAccount()">+ Ny konto</button></div><div id="accountsList" class="bankgrid"></div></div>
+<div class="card"><h2>🔄 Overføringer mellom egne kontoer</h2><p class="muted">Overføringer flytter penger mellom kontoene uten å bli regnet som inntekt eller utgift.</p><button onclick="openTransfer()">Ny overføring</button><div id="transfersList"></div></div>
+</div>
+
+
+
+<div class="card"><h2>📦 Sikkerhetskopi</h2>
+<p class="muted">Eksporter en sikkerhetskopi av appdataene dine som JSON. Du kan importere den igjen senere.</p>
+<button class="secondary" onclick="exportData()">📤 Eksporter sikkerhetskopi</button>
+<button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importer sikkerhetskopi</button>
+<p class="muted" style="margin-bottom:0">CSV-import er også tilgjengelig for banktransaksjoner.</p>
+</div>
+
+<div id="analytics" class="hide">
+<h1>📊 Analyse</h1><p class="muted">Se hvor pengene går og sammenlign måneder.</p>
+<div class="grid">
+<div class="card"><div class="muted">Største utgiftskategori</div><div class="value" id="topCategory">–</div></div>
+<div class="card"><div class="muted">Gjennomsnittlig månedlig utgift</div><div class="value expense" id="avgExpense">0 kr</div></div>
+<div class="card"><div class="muted">Årets utgifter</div><div class="value expense" id="yearExpense">0 kr</div></div>
+</div>
+<div class="card"><h2>Utgifter per kategori</h2><canvas id="categoryChart" height="260"></canvas><div id="categoryLegend"></div></div>
+<div class="card"><h2>Inntekt vs. utgift per måned</h2><canvas id="monthlyChart" height="260"></canvas></div>
+</div>
+
+<div id="budget" class="hide"><h1>Budsjett</h1><p class="muted">Sett månedsbudsjett per kategori.</p>
+<div class="card"><div style="display:flex;justify-content:space-between"><h2>Månedsbudsjett</h2><button onclick="openBudget()">+ Legg til</button></div><div id="budgets"></div></div></div>
+
+<div id="savings" class="hide"><h1>Sparemål</h1><p class="muted">Følg fremdriften mot målene dine.</p>
+<div class="card"><div style="display:flex;justify-content:space-between"><h2>Mine sparemål</h2><button onclick="openSaving()">+ Nytt mål</button></div><div id="goals"></div></div></div>
+
+<div id="bills" class="hide">
+<h1>📅 Faste regninger</h1>
+<p class="muted">Legg inn regninger som kommer igjen, og få oversikt over neste forfall.</p>
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center"><h2>Mine regninger</h2><button onclick="openBill()">+ Ny regning</button></div>
+<div id="billsList"></div>
+</div>
+<div class="card"><h2>💰 Kommende betalinger</h2><div id="upcoming"></div></div>
+</div>
+<section id="tab-debt" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>💳 Gjeld & formue</h2>
+      <p class="muted">Legg inn kredittkort, lån og andre eiendeler selv.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Eiendeler</div><div class="big" id="netAssets">0 kr</div></div>
+    <div class="card"><div class="label">Total gjeld</div><div class="big" id="totalDebt">0 kr</div></div>
+    <div class="card"><div class="label">Nettoformue</div><div class="big" id="netWorth">0 kr</div></div>
+    <div class="card"><div class="label">Kredittkort brukt</div><div class="big" id="creditUsed">0 %</div></div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>💳 Kredittkort</h3>
+      <form id="creditForm" class="form-grid">
+        <input type="hidden" id="creditId">
+        <label>Navn<input id="creditName" required placeholder="F.eks. Bank Norwegian"></label>
+        <label>Kredittgrense<input id="creditLimit" type="number" min="0" step="0.01" required></label>
+        <label>Utestående saldo<input id="creditBalance" type="number" min="0" step="0.01" required></label>
+        <label>Forfallsdag<input id="creditDue" type="number" min="1" max="31" placeholder="15"></label>
+        <button class="primary" type="submit">💾 Lagre kredittkort</button>
+        <button class="secondary" type="button" id="creditCancel" hidden>Avbryt</button>
+      </form>
+      <div id="creditList" class="list"></div>
+    </div>
+
+    <div class="panel">
+      <h3>🏦 Lån</h3>
+      <form id="loanForm" class="form-grid">
+        <input type="hidden" id="loanId">
+        <label>Navn<input id="loanName" required placeholder="F.eks. Billån"></label>
+        <label>Långiver<input id="loanLender" placeholder="F.eks. DNB"></label>
+        <label>Restgjeld<input id="loanBalance" type="number" min="0" step="0.01" required></label>
+        <label>Rente (%)<input id="loanRate" type="number" min="0" step="0.01"></label>
+        <label>Månedlig betaling<input id="loanPayment" type="number" min="0" step="0.01"></label>
+        <label>Forfallsdag<input id="loanDue" type="number" min="1" max="31" placeholder="20"></label>
+        <button class="primary" type="submit">💾 Lagre lån</button>
+        <button class="secondary" type="button" id="loanCancel" hidden>Avbryt</button>
+      </form>
+      <div id="loanList" class="list"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>🏠 Andre eiendeler</h3>
+    <p class="muted">Bankkontoene dine regnes allerede som eiendeler. Her kan du legge til f.eks. bolig, bil, fond eller andre verdier uten å telle bankkontoene dobbelt.</p>
+    <form id="assetForm" class="form-grid">
+      <input type="hidden" id="assetId">
+      <label>Navn<input id="assetName" required placeholder="F.eks. Bil"></label>
+      <label>Verdi<input id="assetValue" type="number" min="0" step="0.01" required></label>
+      <button class="primary" type="submit">💾 Lagre eiendel</button>
+      <button class="secondary" type="button" id="assetCancel" hidden>Avbryt</button>
+    </form>
+    <div id="assetList" class="list"></div>
+  </div>
+</section>
+
+
+<section id="tab-spend" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>💰 Hvor mye kan jeg bruke?</h2>
+      <p class="muted">Et forsiktig estimat basert på det du har registrert i appen.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Tilgjengelig på kontoer</div><div class="big" id="spendBalance">0 kr</div></div>
+    <div class="card"><div class="label">Kommende faste regninger</div><div class="big" id="spendBills">0 kr</div></div>
+    <div class="card"><div class="label">Budsjett igjen denne måneden</div><div class="big" id="spendBudget">0 kr</div></div>
+    <div class="card"><div class="label">Anbefalt tilgjengelig</div><div class="big" id="spendAvailable">0 kr</div></div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>🧮 Slik beregnes beløpet</h3>
+      <div id="spendBreakdown" class="breakdown"></div>
+    </div>
+    <div class="panel">
+      <h3>⚙️ Din buffer</h3>
+      <p class="muted">Velg hvor mye av pengene på kontoene du ønsker å holde av som sikkerhetsbuffer.</p>
+      <label>Bufferbeløp
+        <input id="spendBuffer" type="number" min="0" step="0.01" placeholder="5000">
+      </label>
+      <button class="primary" id="saveSpendSettings" style="margin-top:12px">💾 Lagre buffer</button>
+      <p class="muted" style="margin-top:10px">Bufferen trekkes fra beløpet som foreslås som tilgjengelig.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>💡 Hva betyr tallet?</h3>
+    <p>Dette er et planleggingsverktøy – ikke en bankbalanse. Det bruker bare informasjon du selv har registrert, og blir derfor bedre jo mer komplett appen er.</p>
+  </div>
+</section>
+
+
+<section id="tab-scenario" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>🔮 Hva skjer hvis…?</h2>
+      <p class="muted">Test økonomiske valg uten å endre de faktiske tallene dine.</p>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>🧮 Scenario</h3>
+      <form id="scenarioForm" class="form-grid">
+        <label>Ekstra utgift
+          <input id="scExtraExpense" type="number" min="0" step="0.01" value="0">
+        </label>
+        <label>Ekstra sparing per måned
+          <input id="scMonthlySaving" type="number" min="0" step="0.01" value="0">
+        </label>
+        <label>Antall måneder
+          <input id="scMonths" type="number" min="1" max="120" step="1" value="12">
+        </label>
+        <label>Engangsinntekt
+          <input id="scExtraIncome" type="number" min="0" step="0.01" value="0">
+        </label>
+        <button class="primary" type="submit">🔮 Beregn scenario</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h3>📈 Resultat</h3>
+      <div id="scenarioResult" class="scenario-result">
+        <p class="muted">Fyll inn et scenario og trykk «Beregn scenario».</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>🎯 Hvor lang tid tar det å nå et sparemål?</h3>
+    <form id="goalCalcForm" class="form-grid">
+      <label>Sparemål
+        <input id="goalCalcTarget" type="number" min="0" step="0.01" placeholder="50000">
+      </label>
+      <label>Du har allerede spart
+        <input id="goalCalcCurrent" type="number" min="0" step="0.01" placeholder="10000">
+      </label>
+      <label>Du sparer per måned
+        <input id="goalCalcMonthly" type="number" min="1" step="0.01" placeholder="2000">
+      </label>
+      <button class="primary" type="submit">🎯 Beregn</button>
+    </form>
+    <div id="goalCalcResult" class="result-box"></div>
+  </div>
+</section>
+
+
+<section id="tab-calendar" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>📅 Økonomisk kalender</h2>
+      <p class="muted">Se registrerte inntekter, utgifter, faste regninger og sparing fremover.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="calendar-controls">
+      <button class="secondary" id="calPrev">← Forrige</button>
+      <h3 id="calTitle" style="margin:0"></h3>
+      <button class="secondary" id="calNext">Neste →</button>
+    </div>
+    <div id="financialCalendar"></div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>📊 Månedens forventede oversikt</h3>
+      <div id="calSummary"></div>
+    </div>
+    <div class="panel">
+      <h3>💡 Slik fungerer kalenderen</h3>
+      <p class="muted">Kalenderen bruker informasjonen du allerede har lagt inn. Faste regninger vises på forfallsdagen, mens registrerte transaksjoner vises på datoen du har satt.</p>
+    </div>
+  </div>
+</section>
+
+
+<section id="tab-forecast" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>🔮 12 måneders økonomisk prognose</h2>
+      <p class="muted">Se hvordan saldoen kan utvikle seg basert på det du har registrert.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Startsaldo</div><div class="big" id="forecastStart">0 kr</div></div>
+    <div class="card"><div class="label">Estimert saldo om 12 mnd.</div><div class="big" id="forecastEnd">0 kr</div></div>
+    <div class="card"><div class="label">Forventet netto per måned</div><div class="big" id="forecastNet">0 kr</div></div>
+    <div class="card"><div class="label">Laveste prognosesaldo</div><div class="big" id="forecastLow">0 kr</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>📈 Saldo fremover</h3>
+    <div class="forecast-chart-wrap"><canvas id="forecastCanvas" width="1100" height="360"></canvas></div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>🗓️ Måned for måned</h3>
+      <div id="forecastTable"></div>
+    </div>
+    <div class="panel">
+      <h3>💡 Prognose og forbehold</h3>
+      <p class="muted">Prognosen er et planleggingsestimat. Den bygger på registrerte transaksjoner og gjentakende regninger, ikke bankdata i sanntid.</p>
+      <div id="forecastWarnings"></div>
+    </div>
+  </div>
+</section>
+
+
+<section id="tab-assistant" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>🧠 Min økonomiske assistent</h2>
+      <p class="muted">En enkel oversikt over hva tallene dine forteller deg akkurat nå.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Denne måneden</div><div class="big" id="aiMonthNet">0 kr</div></div>
+    <div class="card"><div class="label">Største utgiftskategori</div><div class="big" id="aiTopCategory">—</div></div>
+    <div class="card"><div class="label">Spareprosent</div><div class="big" id="aiSaveRate">0 %</div></div>
+    <div class="card"><div class="label">Prognose om 12 mnd.</div><div class="big" id="aiForecast">0 kr</div></div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>💬 Hva forteller tallene?</h3>
+      <div id="aiInsights"></div>
+    </div>
+    <div class="panel">
+      <h3>🎯 Små muligheter</h3>
+      <div id="aiSuggestions"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>📌 Viktig</h3>
+    <p class="muted">Dette er automatiske observasjoner basert på dataene du har lagt inn. Det er ikke personlig økonomisk rådgivning, og appen kjenner ikke til utgifter eller inntekter du ikke har registrert.</p>
+  </div>
+</section>
+
+
+<section id="tab-dashboard" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>🏠 Min økonomi</h2>
+      <p class="muted">Et raskt bilde av situasjonen din akkurat nå.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">💰 Disponibelt</div><div class="big" id="dashAvailable">0 kr</div></div>
+    <div class="card"><div class="label">📅 Regninger neste 30 dager</div><div class="big" id="dashBills">0 kr</div></div>
+    <div class="card"><div class="label">💳 Total gjeld</div><div class="big" id="dashDebt">0 kr</div></div>
+    <div class="card"><div class="label">📈 Nettoformue</div><div class="big" id="dashWorth">0 kr</div></div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>🚦 Økonomisk status</h3>
+      <div id="dashStatus" class="status-box"></div>
+    </div>
+    <div class="panel">
+      <h3>📌 Dette skjer snart</h3>
+      <div id="dashUpcoming"></div>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel">
+      <h3>🎯 Fremgang</h3>
+      <div id="dashProgress"></div>
+    </div>
+    <div class="panel">
+      <h3>💡 Dagens oversikt</h3>
+      <div id="dashTips"></div>
+    </div>
+  </div>
+</section>
+
+
+<section id="tab-mobile" class="tab-panel">
+  <div class="section-head">
+    <div>
+      <h2>📱 Min Økonomi på mobilen</h2>
+      <p class="muted">Min Økonomi er klargjort som en installérbar PWA – med appikon, fullskjermvisning og offline-grunnlag.</p>
+    </div>
+  </div>
+
+  <div class="mobile-preview">
+    <div class="phone-frame">
+      <div class="phone-top">Min Økonomi</div>
+      <div class="phone-balance">
+        <span>Disponibelt</span>
+        <strong id="mobileAvailable">0 kr</strong>
+      </div>
+      <div class="phone-actions">
+        <button type="button" onclick="document.querySelector('[data-tab=add]').click()">＋ Utgift</button>
+        <button type="button" onclick="document.querySelector('[data-tab=add]').click()">＋ Inntekt</button>
+      </div>
+      <div class="phone-card"><span>📅 Neste regning</span><strong id="mobileNextBill">Ingen</strong></div>
+      <div class="phone-card"><span>🎯 Sparemål</span><strong id="mobileGoal">—</strong></div>
+    </div>
+  </div>
+
+  <div class="panel mobile-install">
+    <h3>📲 Installer Min Økonomi som app</h3>
+    <button id="installAppBtn" class="primary" type="button" style="display:none">📲 Installer Min Økonomi</button>
+    <p id="installAppStatus" class="muted">Når appen ligger på en vanlig webadresse (HTTPS), kan nettleseren tilby installasjon.</p>
+    <ol>
+      <li><strong>Android/Chrome:</strong> velg «Installer app» eller «Legg til på startskjermen».</li>
+      <li><strong>iPhone/iPad:</strong> Safari → Del → «Legg til på Hjem-skjerm».</li>
+      <li>På PC kan Chrome/Edge vise et installasjonsikon i adressefeltet når appen er klar.</li>
+    </ol>
+    <p class="muted">Denne lokale versjonen på <code>localhost</code> brukes først og fremst til testing. I neste steg legger vi appen på en HTTPS-adresse, slik at telefoninstallasjon og offline-funksjon blir ordentlig tilgjengelig.</p>
+  </div>
+</section>
+
+
+<section id="tab-sync" class="tab-panel">
+  <div class="card">
+    <h2>☁️ Nhost-synk</h2>
+    <p class="muted">Min Økonomi er fortsatt <strong>local-first</strong>. Nhost blir neste lag for konto, skydata og synk mellom PC og mobil.</p>
+    <div id="syncStatus" class="sync-status"></div>
+
+    <h3>🇪🇺 Nhost-prosjekt</h3>
+    <label>Nhost subdomain
+      <input id="nhostSubdomain" placeholder="f.eks. abcdefgh">
+    </label>
+    <label>Region
+      <select id="nhostRegion">
+        <option value="eu-central-1">Europe (Frankfurt)</option>
+        <option value="eu-west-1">Europe (London)</option>
+      </select>
+    </label>
+    <button class="primary" id="saveNhostConfig" style="margin-top:12px">☁️ Lagre Nhost-oppsett</button>
+    <button class="secondary" id="testNhost" style="margin-top:8px">🔎 Test Nhost</button>
+
+    <div class="notice" style="margin-top:14px">
+      <strong>🔐 Viktig:</strong> Vi legger ikke inn noen service-/admin-nøkkel i appen. Klientappen skal bruke Nhosts offentlige klientoppsett og innlogging.
+    </div>
+
+    <h3 style="margin-top:22px">👤 Konto</h3>
+    <label>E-post
+      <input id="nhostEmail" type="email" autocomplete="email" placeholder="deg@example.com">
+    </label>
+    <label>Passord
+      <input id="nhostPassword" type="password" autocomplete="current-password" placeholder="••••••••">
+    </label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="primary" id="nhostSignUp">🆕 Opprett konto</button>
+      <button class="secondary" id="nhostSignIn">🔐 Logg inn</button>
+      <button class="secondary" id="nhostSignOut">🚪 Logg ut</button>
+    </div>
+    <div id="nhostAuthStatus" class="sync-status" style="margin-top:12px"></div>
+
+    <h3 style="margin-top:22px">🔄 Synkronisering</h3>
+    <p class="muted">v38 bygger videre på Nhost-integrasjonen med automatisk synk og konfliktbeskyttelse. Lokal data er fortsatt først.</p>
+    <button class="secondary" id="prepareSync">🧩 Klargjør synkstatus</button>
+    <button class="primary" id="cloudBackup" style="margin-top:8px">☁️ Sikkerhetssynk til Nhost</button>
+    <button class="secondary" id="cloudRestore" style="margin-top:8px">⬇️ Hent sikkerhetskopi fra Nhost</button>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="autoSync" type="checkbox" style="width:auto"> 🔄 Automatisk synkronisering (med konfliktbeskyttelse)</label>
+    <div id="autoSyncStatus" class="sync-status"></div>
+    <div id="syncInfo" class="sync-status"></div>
+    <div class="notice" style="margin-top:12px"><strong>🛡️ Første skyfase:</strong> v38 bruker én krypteringsfri, bruker-eid JSON-snapshot-rad i Nhost som trygg bro for alle appdata. Lokal data er fortsatt fasit til du selv velger å hente fra skyen. Dette er ikke en erstatning for senere finmasket tabellsynk.</div>
+  </div>
+
+  <div class="card">
+    <h3>🧩 Backend-lag</h3>
+    <p class="muted">Appen bruker et eget sync-lag slik at økonomifunksjonene ikke låses til én leverandør. Nhost er valgt som første backend.</p>
+    <div class="sync-flow">
+      <div>💾<br><strong>Lokal data</strong><br><small>offline først</small></div>
+      <div class="arrow">↔</div>
+      <div>🧩<br><strong>Sync-lag</strong><br><small>leverandøruavhengig</small></div>
+      <div class="arrow">↔</div>
+      <div>☁️<br><strong>Nhost</strong><br><small>PostgreSQL + Auth</small></div>
+    </div>
+    <div class="notice">
+      <strong>🔐 Datasikkerhet:</strong> v17 flytter fortsatt ikke økonomidata automatisk til skyen.
+      Vi setter opp database, permissions og migrering først. Det gjør at eksisterende lokale data kan beholdes som fasit mens sky-synken testes.
+    </div>
+    <button class="secondary" id="makeSyncPlan" style="margin-top:10px">🗺️ Vis synk-plan</button>
+    <div id="syncPlan" class="sync-status"></div>
+  </div>
+
+  <div class="card">
+    <h3>🗄️ v18 – Datamodell</h3>
+    <p class="muted">Første steg mot ekte synk: vi definerer hvilke data som skal til PostgreSQL. Ingen økonomidata sendes til skyen før du selv aktiverer synk.</p>
+    <div class="data-model">
+      <div><strong>👤 user</strong><small>konto / eier</small></div>
+      <div><strong>💰 transactions</strong><small>inntekter og utgifter</small></div>
+      <div><strong>🏦 accounts</strong><small>bankkontoer</small></div>
+      <div><strong>📅 recurring_bills</strong><small>faste regninger</small></div>
+      <div><strong>🎯 savings_goals</strong><small>sparemål</small></div>
+      <div><strong>💳 credit_cards</strong><small>kredittkort</small></div>
+      <div><strong>🏦 loans</strong><small>lån</small></div>
+      <div><strong>🏠 assets</strong><small>andre eiendeler</small></div>
+      <div><strong>📊 budgets</strong><small>budsjetter</small></div>
+      <div><strong>🏷️ categories</strong><small>egne kategorier</small></div>
+    </div>
+    <button class="secondary" id="showSchema" style="margin-top:12px">🔍 Vis foreslått PostgreSQL-skjema</button>
+    <pre id="schemaPreview" style="display:none;white-space:pre-wrap;overflow:auto;margin-top:12px;padding:12px;border-radius:10px;background:#f4f4f4"></pre>
+  </div>
+
+  <div class="card">
+    <h3>🏗️ Arkitekturen</h3>
+    <div class="sync-flow">
+      <div>💻<br><strong>PC</strong><br><small>local-first</small></div>
+      <div class="arrow">↔</div>
+      <div>☁️<br><strong>Nhost</strong><br><small>database + auth</small></div>
+      <div class="arrow">↔</div>
+      <div>📱<br><strong>Mobil</strong><br><small>PWA</small></div>
+    </div>
+    <p class="muted">pCloud kommer senere som separat backup-lag. Det holder databasen og backupen adskilt.</p>
+  </div>
+</section>
+
+</main>
+
+
+<div class="modal" id="billModal"><div class="dialog"><h2 id="billTitle">Ny fast regning</h2>
+<form onsubmit="saveBill(event)"><input id="billId" type="hidden">
+<label>Navn</label><input id="billName" required placeholder="F.eks. Strøm">
+<label>Beløp</label><input id="billAmount" inputmode="decimal" min="0" step=".01" required placeholder="F.eks. 29,99">
+<label>Valuta</label><select id="billCurrency" onchange="updateBillCurrencyUI()"><option value="NOK">🇳🇴 NOK – Norske kroner</option><option value="EUR">🇪🇺 EUR – Euro</option><option value="USD">🇺🇸 USD – Amerikanske dollar</option><option value="GBP">🇬🇧 GBP – Britiske pund</option><option value="SEK">🇸🇪 SEK – Svenske kroner</option><option value="DKK">🇩🇰 DKK – Danske kroner</option><option value="CHF">🇨🇭 CHF – Sveitsiske franc</option></select>
+<div id="billCurrencyInfo" class="currency-box">Velg valuta for å se omregningen.</div>
+<label>Kategori</label><select id="billCat"></select>
+<label>Bank/konto</label><select id="billAccount"></select>
+<label>Forfallsdag</label><input id="billDay" type="number" min="1" max="31" required placeholder="F.eks. 20">
+<label>Gjentakelse</label><select id="billFrequency"><option value="monthly">Hver måned</option><option value="quarterly">Hver 3. måned</option><option value="yearly">Hvert år</option></select>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('billModal')">Avbryt</button><button>Lagre</button></div>
+</form></div></div>
+
+
+<div class="modal" id="importModal"><div class="dialog"><h2>📥 Importer CSV</h2>
+<p class="muted">Velg hvilke kolonner CSV-filen inneholder. Første rad må være overskrifter.</p>
+<label>Dato</label><select id="csvDate"></select>
+<label>Beskrivelse</label><select id="csvDesc"></select>
+<label>Beløp</label><select id="csvAmount"></select>
+<label>Type</label><select id="csvType"><option value="">Bestem automatisk fra beløp</option></select>
+<label>Kategori</label><select id="csvCat"><option value="">Annet</option></select>
+<label>Bank/konto</label><select id="csvAccount"></select>
+<div id="csvPreview" class="muted" style="margin-top:10px"></div>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('importModal')">Avbryt</button><button onclick="finishCSV()">Importer</button></div>
+</div></div>
+
+<div class="modal" id="txModal"><div class="dialog"><h2 id="txTitle">Ny transaksjon</h2>
+<form onsubmit="saveTx(event)"><input id="txId" type="hidden"><label>Beskrivelse</label><input id="desc" required>
+<label>Beløp</label><input id="amount" inputmode="decimal" min="0" step=".01" required placeholder="F.eks. 49,99">
+<label>Valuta</label><select id="currency" onchange="updateCurrencyUI()"><option value="NOK">🇳🇴 NOK – Norske kroner</option><option value="EUR">🇪🇺 EUR – Euro</option><option value="USD">🇺🇸 USD – Amerikanske dollar</option><option value="GBP">🇬🇧 GBP – Britiske pund</option><option value="SEK">🇸🇪 SEK – Svenske kroner</option><option value="DKK">🇩🇰 DKK – Danske kroner</option><option value="CHF">🇨🇭 CHF – Sveitsiske franc</option></select>
+<div id="currencyInfo" class="currency-box">Velg valuta for å se omregningen.</div>
+<label>Faktisk belastet i NOK <span class="muted">(valgfritt)</span></label><input id="actualNok" inputmode="decimal" min="0" step=".01" placeholder="F.eks. 1195,42">
+<div id="actualInfo" class="muted" style="margin-top:4px">Hvis du fyller inn faktisk belastet NOK, brukes dette beløpet i budsjettet.</div>
+<label>Type</label><select id="type"><option value="expense">Utgift</option><option value="income">Inntekt</option></select>
+<label>Kategori</label><select id="cat"></select><label>Bank/konto</label><select id="txAccount"></select>
+<label>Dato</label><input id="date" type="date" required>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('txModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
+
+<div class="modal" id="catModal"><div class="dialog"><h2>Ny kategori</h2><form onsubmit="saveCat(event)">
+<label>Kategorinavn</label><input id="newCat" required placeholder="F.eks. Hage">
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('catModal')">Avbryt</button><button>Legg til</button></div></form></div></div>
+
+<div class="modal" id="accountModal"><div class="dialog"><h2 id="accountTitle">Ny konto</h2><form onsubmit="saveAccount(event)">
+<input id="accountId" type="hidden"><label>Bank</label><input id="bankName" required placeholder="F.eks. DNB">
+<label>Kontonavn</label><input id="accountName" required placeholder="F.eks. Brukskonto">
+<label>Startsaldo (kr)</label><input id="openingBalance" type="number" step=".01" value="0">
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('accountModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
+
+<div class="modal" id="transferModal"><div class="dialog"><h2>🔄 Ny overføring</h2><form onsubmit="saveTransfer(event)">
+<label>Fra konto</label><select id="fromAccount"></select><label>Til konto</label><select id="toAccount"></select>
+<label>Beløp (kr)</label><input id="transferAmount" type="number" min=".01" step=".01" required>
+<label>Dato</label><input id="transferDate" type="date" required><label>Beskrivelse</label><input id="transferDesc" placeholder="F.eks. Flytting til regningskonto">
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('transferModal')">Avbryt</button><button>Overfør</button></div></form></div></div>
+
+<div class="modal" id="budgetModal"><div class="dialog"><h2>Nytt budsjett</h2><form onsubmit="saveBudget(event)">
+<label>Kategori</label><select id="budgetCat"></select><label>Beløp per måned</label><input id="budgetAmount" type="number" min="0" required>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('budgetModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
+
+<div class="modal" id="savingModal"><div class="dialog"><h2>Nytt sparemål</h2><form onsubmit="saveGoal(event)">
+<label>Navn</label><input id="goalName" required placeholder="F.eks. Ferie"><label>Målbeløp</label><input id="goalTarget" type="number" min="1" required>
+<label>Allerede spart</label><input id="goalCurrent" type="number" min="0" value="0" required>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('savingModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
+
+<script>
+const K={tx:'mo3_tx',cat:'mo3_cat',acc:'mo3_acc',bud:'mo3_bud',goal:'mo3_goal',transfer:'mo3_transfer',bill:'mo4_bill'};
+let tx=JSON.parse(localStorage.getItem(K.tx)||'[]');
+let cats=JSON.parse(localStorage.getItem(K.cat)||'["Bolig","Mat","Transport","Helse","Hobby","Shopping","Regninger","Lønn","Annet"]');
+let accounts=JSON.parse(localStorage.getItem(K.acc)||'[]');
+let bud=JSON.parse(localStorage.getItem(K.bud)||'[]');
+let goals=JSON.parse(localStorage.getItem(K.goal)||'[]');
+let transfers=JSON.parse(localStorage.getItem(K.transfer)||'[]');let bills=JSON.parse(localStorage.getItem(K.bill)||'[]');
+
+function readExtraData(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('mo7_data')||'{}');
+    return {
+      creditCards:Array.isArray(saved.creditCards)?saved.creditCards:[],
+      loans:Array.isArray(saved.loans)?saved.loans:[],
+      assets:Array.isArray(saved.assets)?saved.assets:[],
+      spendSettings:(saved.spendSettings&&typeof saved.spendSettings==='object')?saved.spendSettings:{buffer:0}
+    };
+  }catch(e){
+    return {creditCards:[],loans:[],assets:[],spendSettings:{buffer:0}};
+  }
+}
+const extraData=readExtraData();
+
+function uid(){
+  if(window.crypto && typeof window.crypto.randomUUID==='function') return window.crypto.randomUUID();
+  return 'mo-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+}
+
+/* Shared data layer: keeps the original v3-v4 storage compatible with
+   the newer v7-v18 modules. */
+const data={
+  creditCards:extraData.creditCards,
+  loans:extraData.loans,
+  assets:extraData.assets,
+  spendSettings:extraData.spendSettings
+};
+Object.defineProperties(data,{
+  transactions:{enumerable:true,get:()=>tx},
+  accounts:{enumerable:true,get:()=>accounts},
+  goals:{enumerable:true,get:()=>goals},
+  bills:{enumerable:true,get:()=>bills},
+  budgets:{enumerable:true,get:()=>Object.fromEntries(bud.map(b=>[b.cat,Number(b.amount||0)]))}
+});
+
+function save(){
+  persist();
+  localStorage.setItem('mo7_data',JSON.stringify({
+    creditCards:data.creditCards||[],
+    loans:data.loans||[],
+    assets:data.assets||[],
+    spendSettings:data.spendSettings||{buffer:0}
+  }));
+}
+
+const kr=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills)); if(!window.__restoringCloud) markLocalDirty();};
+function show(id,b){document.querySelectorAll('main>div').forEach(x=>x.classList.add('hide'));document.getElementById(id).classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function accountLabel(id){let a=accounts.find(x=>x.id===id);return a?a.bank+' – '+a.name:'Ikke valgt'}
+function fillSelects(){
+cat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('')+'<option value="__new">➕ Ny kategori...</option>';
+budgetCat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('');
+let opts=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('');
+txAccount.innerHTML=opts||'<option value="">Opprett en konto først</option>';fromAccount.innerHTML=opts;toAccount.innerHTML=opts;
+cat.onchange=()=>{if(cat.value==='__new'){cat.value=cats[0];openM('catModal')}}
+}
+function moneyNok(x){return Number(x?.actualNok||x?.nokAmount||x?.amount||0)}
+function currencySymbol(c){return ({NOK:'kr',EUR:'€',USD:'$',GBP:'£',SEK:'kr',DKK:'kr',CHF:'CHF'})[c]||c}
+function parseMoneyValue(v){let s=String(v??'').trim().replace(/\u00a0/g,' ').replace(/\s+/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(s.includes(','))s=s.replace(',','.');let n=Number(s);return Number.isFinite(n)?n:0}
+function rateKey(currency,date){return 'mo_currency_rate_'+currency+'_'+date}
+async function fetchNokRate(currency,date){
+  if(currency==='NOK') return 1;
+  const cached=localStorage.getItem(rateKey(currency,date)); if(cached&&Number(cached)>0)return Number(cached);
+  const end=new Date(date+'T12:00:00'); if(isNaN(end))throw new Error('Ugyldig dato');
+  for(let back=0;back<=7;back++){
+    const d=new Date(end); d.setDate(d.getDate()-back); const ds=d.toISOString().slice(0,10);
+    try{
+      const url='https://data.norges-bank.no/api/data/EXR/B.'+currency+'.NOK.SP?format=csv&startPeriod='+ds+'&endPeriod='+ds+'&locale=no';
+      const r=await fetch(url); if(!r.ok)continue; const text=await r.text();
+      const lines=text.trim().split(/\r?\n/).filter(Boolean);
+      for(let i=lines.length-1;i>=0;i--){const parts=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim()); const nums=parts.map(x=>x.replace(',','.')).map(Number).filter(n=>Number.isFinite(n)&&n>0); if(nums.length){const rate=nums[nums.length-1]; if(rate>0){localStorage.setItem(rateKey(currency,date),String(rate)); return rate;}}}
+    }catch(e){}
+  }
+  throw new Error('Fant ingen valutakurs fra Norges Bank for denne datoen. Du kan prøve igjen eller bruke NOK.');
+}
+async function updateCurrencyUI(){
+  const c=el('currency').value, d=el('date').value, info=el('currencyInfo');
+  const a=parseMoneyValue(el('amount').value);
+  if(c==='NOK'){info.innerHTML='<strong>🇳🇴 NOK</strong> – ingen omregning nødvendig.';return;}
+  if(!d){info.textContent='Velg dato først.';return;}
+  info.textContent='⏳ Henter dagskurs fra Norges Bank…';
+  try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML='<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>'+(a?' · <strong>'+fmtN(calc)+' NOK</strong> beregnet':'');}catch(e){info.textContent='⚠️ '+e.message;}
+}
+function openTx(id){fillSelects();txTitle.textContent=id?'Rediger transaksjon':'Ny transaksjon';let x=tx.find(a=>a.id===id);txId.value=id||'';desc.value=x?.desc||'';amount.value=x?.amount??'';currency.value=x?.currency||'NOK';actualNok.value=x?.actualNok??'';type.value=x?.type||'expense';date.value=x?.date||new Date().toISOString().slice(0,10);if(x){cat.value=x.cat;txAccount.value=x.accountId||''}updateCurrencyUI();openM('txModal')}
+async function saveTx(e){e.preventDefault();if(!txAccount.value){alert('Velg en bank/konto først.');return}const c=currency.value||'NOK', a=parseMoneyValue(amount.value);if(!(a>=0)){alert('Skriv inn et gyldig beløp.');return}let rate=1,nokAmount=a;if(c!=='NOK'){try{rate=await fetchNokRate(c,date.value);nokAmount=Math.round(a*rate*100)/100}catch(err){alert(err.message);return}}const actual=parseMoneyValue(actualNok.value);let id=txId.value,x={id:id||uid(),desc:desc.value.trim(),amount:a,currency:c,rate,nokAmount,actualNok:actual>0?actual:null,type:type.value,cat:cat.value,accountId:txAccount.value,date:date.value};if(id)tx=tx.map(a=>a.id===id?x:a);else tx.push(x);persist();closeM('txModal');e.target.reset();render()}
+function saveCat(e){e.preventDefault();let n=newCat.value.trim();if(n&&!cats.includes(n))cats.push(n);persist();closeM('catModal');e.target.reset();render()}
+function openAccount(id){let a=accounts.find(x=>x.id===id);accountTitle.textContent=a?'Rediger konto':'Ny konto';accountId.value=id||'';bankName.value=a?.bank||'';accountName.value=a?.name||'';openingBalance.value=a?.opening||0;openM('accountModal')}
+function saveAccount(e){e.preventDefault();let id=accountId.value,x={id:id||crypto.randomUUID(),bank:bankName.value.trim(),name:accountName.value.trim(),opening:+openingBalance.value};if(id)accounts=accounts.map(a=>a.id===id?x:a);else accounts.push(x);persist();closeM('accountModal');e.target.reset();render()}
+function deleteAccount(id){if(tx.some(x=>x.accountId===id)||transfers.some(t=>t.from===id||t.to===id)){alert('Kontoen har transaksjoner eller overføringer og kan ikke slettes ennå.');return}if(confirm('Slette kontoen?')){accounts=accounts.filter(x=>x.id!==id);persist();render()}}
+function openTransfer(){fillSelects();if(accounts.length<2){alert('Du trenger minst to kontoer for å lage en overføring.');return}transferDate.value=new Date().toISOString().slice(0,10);openM('transferModal')}
+function saveTransfer(e){e.preventDefault();if(fromAccount.value===toAccount.value){alert('Velg to forskjellige kontoer.');return}transfers.push({id:crypto.randomUUID(),from:fromAccount.value,to:toAccount.value,amount:+transferAmount.value,date:transferDate.value,desc:transferDesc.value.trim()||'Overføring'});persist();closeM('transferModal');e.target.reset();render()}
+function openBudget(){fillSelects();openM('budgetModal')}
+function saveBudget(e){e.preventDefault();let c=budgetCat.value,a=+budgetAmount.value,o=bud.find(x=>x.cat===c);if(o)o.amount=a;else bud.push({cat:c,amount:a});persist();closeM('budgetModal');e.target.reset();render()}
+function openSaving(){openM('savingModal')}
+function saveGoal(e){e.preventDefault();goals.push({name:goalName.value.trim(),target:+goalTarget.value,current:+goalCurrent.value});persist();closeM('savingModal');e.target.reset();render()}
+function removeTx(id){if(confirm('Slette denne transaksjonen?')){tx=tx.filter(x=>x.id!==id);persist();render()}}
+function clearAll(){if(confirm('Slette alle transaksjoner?')){tx=[];persist();render()}}
+function delBud(i){bud.splice(i,1);persist();render()}function delGoal(i){goals.splice(i,1);persist();render()}
+function addGoal(i){let n=prompt('Hvor mye vil du legge til?','500');if(n!==null&&!isNaN(n)){goals[i].current+=+n;persist();render()}}
+function closeM(id){document.getElementById(id).classList.remove('open')}function openM(id){document.getElementById(id).classList.add('open')}
+function acctBalance(a){let b=a.opening;tx.filter(x=>x.accountId===a.id).forEach(x=>b+=x.type==='income'?moneyNok(x):-moneyNok(x));transfers.forEach(t=>{if(t.from===a.id)b-=t.amount;if(t.to===a.id)b+=t.amount});return b}
+
+function fillBillSelects(){
+  billCat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('');
+  billAccount.innerHTML=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('')||'<option value="">Opprett en konto først</option>';
+}
+async function updateBillCurrencyUI(){
+  const c=el('billCurrency').value, d=new Date().toISOString().slice(0,10), info=el('billCurrencyInfo');
+  const a=parseMoneyValue(el('billAmount').value);
+  if(c==='NOK'){info.innerHTML='<strong>🇳🇴 NOK</strong> – ingen omregning nødvendig.';return;}
+  info.textContent='⏳ Henter siste tilgjengelige dagskurs fra Norges Bank…';
+  try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML='<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>'+(a?' · <strong>'+fmtN(calc)+' NOK</strong> estimert':'')+'<br><span class="muted">Regningen lagres i '+c+' og NOK-estimatet oppdateres når appen beregner kommende regninger.</span>';}catch(e){info.textContent='⚠️ '+e.message;}
+}
+function openBill(id){
+  fillBillSelects();
+  let b=bills.find(x=>x.id===id);
+  billTitle.textContent=b?'Rediger fast regning':'Ny fast regning';
+  billId.value=id||''; billName.value=b?.name||''; billAmount.value=b?.amount??'';
+  billCurrency.value=b?.currency||'NOK';
+  billDay.value=b?.day||1; billFrequency.value=b?.frequency||'monthly';
+  if(b){billCat.value=b.cat;billAccount.value=b.accountId||''}
+  updateBillCurrencyUI(); openM('billModal');
+}
+function saveBill(e){
+  e.preventDefault();
+  if(!billAccount.value){alert('Velg en bank/konto først.');return}
+  const c=billCurrency.value||'NOK', a=parseMoneyValue(billAmount.value);
+  if(!(a>=0)){alert('Skriv inn et gyldig beløp.');return}
+  let id=billId.value;
+  let b={id:id||uid(),name:billName.value.trim(),amount:a,currency:c,cat:billCat.value,accountId:billAccount.value,day:+billDay.value,frequency:billFrequency.value};
+  if(id)bills=bills.map(x=>x.id===id?b:x);else bills.push(b);
+  persist();closeM('billModal');e.target.reset();render();
+}
+function deleteBill(id){if(confirm('Slette denne faste regningen?')){bills=bills.filter(x=>x.id!==id);persist();render()}}
+function nextDue(b){
+  let now=new Date(), y=now.getFullYear(), m=now.getMonth(), d=Math.min(b.day,new Date(y,m+1,0).getDate());
+  let candidate=new Date(y,m,d);
+  if(candidate<new Date(y,m,now.getDate())){ if(b.frequency==='yearly') candidate=new Date(y+1,m,d); else if(b.frequency==='quarterly') candidate=new Date(y,m+3,Math.min(b.day,new Date(y,m+4,0).getDate())); else candidate=new Date(y,m+1,Math.min(b.day,new Date(y,m+2,0).getDate()));}
+  return candidate;
+}
+function billNokEstimate(b){
+  const c=b.currency||'NOK'; if(c==='NOK') return Number(b.amount)||0;
+  const cached=localStorage.getItem(rateKey(c,new Date().toISOString().slice(0,10)));
+  return cached?Math.round(Number(b.amount)*Number(cached)*100)/100:Number(b.amount)||0;
+}
+function renderBills(){
+  billsList.innerHTML=bills.map(b=>{
+    let n=nextDue(b);
+    let freq=b.frequency==='yearly'?'Årlig':b.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
+    let billDisplay=b.currency&&b.currency!=='NOK'?fmtN(b.amount)+' '+b.currency+' · NOK-estimat '+kr(billNokEstimate(b)):kr(b.amount); return '<div class="row"><div class="rowtop"><b>📄 '+esc(b.name)+'</b><strong>'+billDisplay+'</strong></div><div class="muted">'+esc(b.cat)+' · '+esc(accountLabel(b.accountId))+' · '+freq+'</div><div style="margin-top:7px">Neste forfall: <b>'+n.toLocaleDateString('nb-NO')+'</b> <button class="secondary" style="float:right;padding:5px 8px" onclick="openBill(\''+b.id+'\')">✏️ Rediger</button> <button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteBill(\''+b.id+'\')">Slett</button></div></div>';
+  }).join('')||'<div class="empty">Ingen faste regninger ennå.</div>';
+  let list=bills.map(b=>({b,n:nextDue(b)})).sort((a,b)=>a.n-b.n).slice(0,8);
+  upcoming.innerHTML=list.map(x=>'<div class="row"><div class="rowtop"><b>'+x.n.toLocaleDateString('nb-NO')+' · '+esc(x.b.name)+'</b><span>'+kr(x.b.amount)+'</span></div><small>'+esc(accountLabel(x.b.accountId))+'</small></div>').join('')||'<div class="empty">Ingen kommende betalinger.</div>';
+}
+
+
+function drawBarChart(canvas, labels, values, title){
+  let ctx=canvas.getContext('2d'), dpr=window.devicePixelRatio||1, w=canvas.clientWidth||700, h=260;
+  canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  let max=Math.max(...values,1), left=45, bottom=35, top=20, usableH=h-top-bottom, usableW=w-left-15;
+  ctx.font='12px Arial';ctx.fillStyle='#687080';ctx.strokeStyle='#e5e7eb';
+  ctx.beginPath();ctx.moveTo(left,top);ctx.lineTo(left,h-bottom);ctx.lineTo(w-15,h-bottom);ctx.stroke();
+  let bw=Math.max(18,usableW/Math.max(labels.length,1)*.6);
+  values.forEach((v,i)=>{let x=left+(i+.5)*usableW/labels.length-bw/2, bh=v/max*usableH,y=h-bottom-bh;ctx.fillStyle='#315efb';ctx.fillRect(x,y,bw,bh);ctx.fillStyle='#687080';ctx.textAlign='center';ctx.fillText(labels[i],x+bw/2,h-12);ctx.fillText(Math.round(v).toLocaleString('nb-NO'),x+bw/2,Math.max(12,y-5))});
+}
+function drawLineChart(canvas, labels, incomes, expenses){
+  let ctx=canvas.getContext('2d'),dpr=devicePixelRatio||1,w=canvas.clientWidth||700,h=260;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  let max=Math.max(...incomes,...expenses,1),left=45,right=15,top=20,bottom=35,uw=w-left-right,uh=h-top-bottom;
+  ctx.strokeStyle='#e5e7eb';ctx.beginPath();ctx.moveTo(left,top);ctx.lineTo(left,h-bottom);ctx.lineTo(w-right,h-bottom);ctx.stroke();
+  function line(vals){ctx.beginPath();vals.forEach((v,i)=>{let x=left+(i/(vals.length-1||1))*uw,y=h-bottom-(v/max)*uh;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  ctx.strokeStyle='#315efb';line(incomes);ctx.strokeStyle='#d94b61';line(expenses);ctx.fillStyle='#687080';ctx.font='12px Arial';ctx.textAlign='center';labels.forEach((x,i)=>ctx.fillText(x,left+(i/(labels.length-1||1))*uw,h-12));
+  ctx.textAlign='left';ctx.fillText('● Inntekt',left,14);ctx.fillText('● Utgift',left+75,14);
+}
+function renderAnalytics(){
+  let year=new Date().getFullYear(), ytx=tx.filter(x=>x.date.slice(0,4)==year);
+  let byCat={};ytx.filter(x=>x.type==='expense').forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+moneyNok(x));
+  let top=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];topCategory.textContent=top?top[0]:'–';
+  let total=ytx.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0);yearExpense.textContent=kr(total);
+  let monthly=Array.from({length:12},(_,m)=>{let mm=String(m+1).padStart(2,'0'),a=ytx.filter(x=>x.date.slice(0,7)==year+'-'+mm);return {i:a.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),e:a.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0)}});
+  avgExpense.textContent=kr(monthly.reduce((s,x)=>s+x.e,0)/12);
+  drawBarChart(categoryChart,Object.keys(byCat),Object.values(byCat));
+  drawLineChart(monthlyChart,['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'],monthly.map(x=>x.i),monthly.map(x=>x.e));
+}
+function fillFilters(){
+  let oldA=typeof filterAccount!=='undefined'?filterAccount.value:'',oldC=typeof filterCategory!=='undefined'?filterCategory.value:'',oldT=typeof filterType!=='undefined'?filterType.value:'';
+  let ac='<option value="">Alle kontoer</option>'+accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('');
+  let cc='<option value="">Alle kategorier</option>'+cats.map(c=>'<option>'+esc(c)+'</option>').join('');
+  filterAccount.innerHTML=ac;filterCategory.innerHTML=cc;filterAccount.value=oldA;filterCategory.value=oldC;filterType.value=oldT;
+}
+function filteredItems(items){
+  let q=(searchTx.value||'').toLowerCase(),a=filterAccount.value,c=filterCategory.value,t=filterType.value;
+  return items.filter(x=>(!q||(x.desc+' '+x.cat+' '+accountLabel(x.accountId)).toLowerCase().includes(q))&&(!a||x.accountId===a)&&(!c||x.cat===c)&&(!t||x.type===t));
+}
+
+
+let pendingCSV=[];
+function downloadBlob(name,text,type){let blob=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+function exportData(){
+  let backup={
+    version:6,
+    exportedAt:new Date().toISOString(),
+    transactions:tx,categories:cats,accounts:accounts,budgets:bud,goals:goals,transfers:transfers,bills:bills,
+    creditCards:data.creditCards||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0}
+  };
+  downloadBlob('min-okonomi-sikkerhetskopi.json',JSON.stringify(backup,null,2),'application/json');
+}
+function parseCSV(text){
+  let lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim()), out=[];
+  if(!lines.length)return out;
+  let sep=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';
+  function split(line){let a=[],cur='',q=false;for(let i=0;i<line.length;i++){let ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}else if(ch===sep&&!q){a.push(cur.trim());cur=''}else cur+=ch}a.push(cur.trim());return a}
+  let headers=split(lines[0]);for(let i=1;i<lines.length;i++){let v=split(lines[i]),o={};headers.forEach((h,j)=>o[h]=v[j]??'');out.push(o)}return {headers,rows:out};
+}
+function importFile(e){
+ let file=e.target.files[0];if(!file)return;
+ let reader=new FileReader();
+ reader.onload=()=>{let text=reader.result;
+   if(file.name.toLowerCase().endsWith('.json')){try{let b=JSON.parse(text);if(!b.transactions||!b.categories||!b.accounts){alert('Dette ser ikke ut som en Min Økonomi-sikkerhetskopi.');return}if(confirm('Importere sikkerhetskopien? Dette erstatter dataene som ligger i appen nå.')){tx=b.transactions||[];cats=b.categories||cats;accounts=b.accounts||[];bud=b.budgets||[];goals=b.goals||[];transfers=b.transfers||[];bills=b.bills||[];
+          data.creditCards=Array.isArray(b.creditCards)?b.creditCards:[];
+          data.loans=Array.isArray(b.loans)?b.loans:[];
+          data.assets=Array.isArray(b.assets)?b.assets:[];
+          data.spendSettings=(b.spendSettings&&typeof b.spendSettings==='object')?b.spendSettings:{buffer:0};
+          persist();save();render();alert('Sikkerhetskopien er importert!')}}catch(err){alert('Kunne ikke lese JSON-filen.')}} 
+   else {let p=parseCSV(text);if(!p.rows.length){alert('CSV-filen inneholder ingen rader.');return}pendingCSV=p.rows;let hs=p.headers;
+     let fill=(id,opts,guess)=>{let el=document.getElementById(id);el.innerHTML=opts.map((x,i)=>'<option value="'+i+'">'+esc(x)+'</option>').join('');let g=hs.findIndex(h=>h.toLowerCase().includes(guess));if(g>=0)el.value=g};
+     fill('csvDate',hs,'dato');fill('csvDesc',hs,'beskriv');fill('csvAmount',hs,'belø');fill('csvAccount',hs,'konto');csvCat.innerHTML='<option value="">Annet</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+     csvPreview.textContent=p.rows.length+' transaksjoner funnet. Du kan kontrollere kolonnene før import.';openM('importModal');
+   }
+ };reader.readAsText(file,'UTF-8');e.target.value='';
+}
+function finishCSV(){
+ let di=+csvDate.value,ds=+csvDesc.value,ai=+csvAmount.value,ci=csvCat.value,ac=+csvAccount.value;
+ let added=0;
+ pendingCSV.forEach(r=>{
+   let raw=String(r[Object.keys(r)[ai]]||'').replace(/\s/g,'').replace(/kr/gi,'').replace(/\.(?=\d{3}(?:,|$))/g,'').replace(',','.');
+   let amount=parseFloat(raw);if(!isFinite(amount)||amount===0)return;
+   let dateRaw=String(r[Object.keys(r)[di]]||'');let d=new Date(dateRaw);
+   if(isNaN(d)) {let m=dateRaw.match(/(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})/);if(m)d=new Date(+m[3]<100?2000+(+m[3]):+m[3],+m[2]-1,+m[1])}
+   if(isNaN(d))return;
+   let descVal=String(r[Object.keys(r)[ds]]||'Importert transaksjon'), accountId='';
+   if(accounts[ac])accountId=accounts[ac].id; else if(Object.keys(r)[ac]){let name=String(r[Object.keys(r)[ac]]||'');let found=accounts.find(a=>(a.bank+' – '+a.name).toLowerCase()===name.toLowerCase()||a.name.toLowerCase()===name.toLowerCase());if(found)accountId=found.id}
+   if(!accountId&&accounts.length)accountId=accounts[0].id;
+   tx.push({id:uid(),desc:descVal,amount:Math.abs(amount),currency:'NOK',rate:1,nokAmount:Math.abs(amount),actualNok:null,type:amount<0?'expense':'income',cat:ci||'Annet',accountId,date:d.toISOString().slice(0,10)});added++;
+ });
+ persist();closeM('importModal');render();alert(added+' transaksjoner ble importert.');
+}
+
+
+function fmtN(n){ return new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2}).format(Number(n)||0); }
+function el(id){ return document.getElementById(id); }
+function readAmount(id){
+  const node=el(id); if(!node) return 0;
+  let v=String(node.value??'').trim().replace(/\u00a0/g,' ').replace(/\s+/g,'');
+  if(!v) return 0;
+  // Accept both Norwegian 1 234,56 and plain 1234.56 / 1234,56.
+  if(v.includes(',') && v.includes('.')) v=v.lastIndexOf(',')>v.lastIndexOf('.') ? v.replace(/\./g,'').replace(',','.') : v.replace(/,/g,'');
+  else if(v.includes(',')) v=v.replace(',','.');
+  const n=Number(v); return Number.isFinite(n)?n:0;
+}
+function readInteger(id){ return Math.trunc(readAmount(id)); }
+
+function renderDebt(){
+  const accountAssets = (data.accounts||[]).reduce((sum,a)=>sum + Number(a.startBalance??a.opening??0) + (data.transactions||[]).filter(t=>t.accountId===a.id).reduce((x,t)=>x + (t.type==='income'?Number(t.amount):t.type==='expense'?-Number(t.amount):0),0),0);
+  const otherAssets = (data.assets||[]).reduce((s,a)=>s+Number(a.value||0),0);
+  const creditDebt = (data.creditCards||[]).reduce((s,c)=>s+Number(c.balance||0),0);
+  const loanDebt = (data.loans||[]).reduce((s,l)=>s+Number(l.balance||0),0);
+  const assets = accountAssets + otherAssets;
+  const debt = creditDebt + loanDebt;
+  const worth = assets - debt;
+  const limit = (data.creditCards||[]).reduce((s,c)=>s+Number(c.limit||0),0);
+  const used = limit ? creditDebt/limit*100 : 0;
+
+  document.getElementById('netAssets').textContent = fmtN(assets)+' kr';
+  document.getElementById('totalDebt').textContent = fmtN(debt)+' kr';
+  document.getElementById('netWorth').textContent = fmtN(worth)+' kr';
+  document.getElementById('creditUsed').textContent = fmtN(used)+' %';
+
+  document.getElementById('creditList').innerHTML = (data.creditCards||[]).length ? data.creditCards.map(c=>`
+    <div class="row-item">
+      <div><strong>${esc(c.name)}</strong><div class="muted">Saldo: ${fmtN(c.balance)} kr · Grense: ${fmtN(c.limit)} kr${c.due?` · Forfall: ${c.due}.`:''}</div></div>
+      <div class="actions"><button onclick="editCredit('${c.id}')">✏️</button><button onclick="deleteCredit('${c.id}')">🗑️</button></div>
+    </div>`).join('') : '<p class="muted">Ingen kredittkort lagt inn ennå.</p>';
+
+  document.getElementById('loanList').innerHTML = (data.loans||[]).length ? data.loans.map(l=>`
+    <div class="row-item">
+      <div><strong>${esc(l.name)}</strong><div class="muted">${esc(l.lender||'')} · Restgjeld: ${fmtN(l.balance)} kr${l.rate!==''?` · Rente: ${fmtN(l.rate)} %`:''}${l.payment?` · ${fmtN(l.payment)} kr/mnd`:''}</div></div>
+      <div class="actions"><button onclick="editLoan('${l.id}')">✏️</button><button onclick="deleteLoan('${l.id}')">🗑️</button></div>
+    </div>`).join('') : '<p class="muted">Ingen lån lagt inn ennå.</p>';
+
+  document.getElementById('assetList').innerHTML = (data.assets||[]).length ? data.assets.map(a=>`
+    <div class="row-item">
+      <div><strong>${esc(a.name)}</strong><div class="muted">${fmtN(a.value)} kr</div></div>
+      <div class="actions"><button onclick="editAsset('${a.id}')">✏️</button><button onclick="deleteAsset('${a.id}')">🗑️</button></div>
+    </div>`).join('') : '<p class="muted">Ingen andre eiendeler lagt inn ennå.</p>';
+}
+
+const creditFormEl=el('creditForm'), loanFormEl=el('loanForm'), assetFormEl=el('assetForm');
+const creditCancelEl=el('creditCancel'), loanCancelEl=el('loanCancel'), assetCancelEl=el('assetCancel');
+
+creditFormEl.addEventListener('submit',e=>{
+  e.preventDefault();
+  const obj={id:el('creditId').value||uid(),name:el('creditName').value.trim(),limit:readAmount('creditLimit'),balance:readAmount('creditBalance'),due:el('creditDue').value?readInteger('creditDue'):''};
+  if(!obj.name){alert('Skriv inn navnet på kredittkortet.');return;}
+  const i=data.creditCards.findIndex(x=>x.id===obj.id);
+  if(i>=0) data.creditCards[i]=obj; else data.creditCards.push(obj);
+  save(); resetCredit(); render();
+});
+function resetCredit(){el('creditId').value='';el('creditName').value='';el('creditLimit').value='';el('creditBalance').value='';el('creditDue').value='';creditCancelEl.hidden=true;}
+creditCancelEl.addEventListener('click',resetCredit);
+function editCredit(id){const c=data.creditCards.find(x=>x.id===id); if(!c)return; el('creditId').value=c.id;el('creditName').value=c.name;el('creditLimit').value=c.limit;el('creditBalance').value=c.balance;el('creditDue').value=c.due||'';creditCancelEl.hidden=false;}
+function deleteCredit(id){if(confirm('Slette dette kredittkortet?')){data.creditCards=data.creditCards.filter(x=>x.id!==id);save();render();}}
+
+loanFormEl.addEventListener('submit',e=>{
+  e.preventDefault();
+  const obj={id:el('loanId').value||uid(),name:el('loanName').value.trim(),lender:el('loanLender').value.trim(),balance:readAmount('loanBalance'),rate:el('loanRate').value===''?'':readAmount('loanRate'),payment:readAmount('loanPayment'),due:el('loanDue').value?readInteger('loanDue'):''};
+  if(!obj.name){alert('Skriv inn navnet på lånet.');return;}
+  const i=data.loans.findIndex(x=>x.id===obj.id);
+  if(i>=0) data.loans[i]=obj; else data.loans.push(obj);
+  save(); resetLoan(); render();
+});
+function resetLoan(){el('loanId').value='';el('loanName').value='';el('loanLender').value='';el('loanBalance').value='';el('loanRate').value='';el('loanPayment').value='';el('loanDue').value='';loanCancelEl.hidden=true;}
+loanCancelEl.addEventListener('click',resetLoan);
+function editLoan(id){const l=data.loans.find(x=>x.id===id); if(!l)return; el('loanId').value=l.id;el('loanName').value=l.name;el('loanLender').value=l.lender||'';el('loanBalance').value=l.balance;el('loanRate').value=l.rate;el('loanPayment').value=l.payment;el('loanDue').value=l.due||'';loanCancelEl.hidden=false;}
+function deleteLoan(id){if(confirm('Slette dette lånet?')){data.loans=data.loans.filter(x=>x.id!==id);save();render();}}
+
+assetFormEl.addEventListener('submit',e=>{
+  e.preventDefault();
+  const obj={id:el('assetId').value||uid(),name:el('assetName').value.trim(),value:readAmount('assetValue')};
+  if(!obj.name){alert('Skriv inn navnet på eiendelen.');return;}
+  const i=data.assets.findIndex(x=>x.id===obj.id);
+  if(i>=0)data.assets[i]=obj;else data.assets.push(obj);
+  save();resetAsset();render();
+});
+function resetAsset(){el('assetId').value='';el('assetName').value='';el('assetValue').value='';assetCancelEl.hidden=true;}
+assetCancelEl.addEventListener('click',resetAsset);
+function editAsset(id){const a=data.assets.find(x=>x.id===id);if(!a)return;el('assetId').value=a.id;el('assetName').value=a.name;el('assetValue').value=a.value;assetCancelEl.hidden=false;}
+function deleteAsset(id){if(confirm('Slette denne eiendelen?')){data.assets=data.assets.filter(x=>x.id!==id);save();render();}}
+
+
+function accountBalance(a){
+  return Number(a.startBalance??a.opening??0) +
+    (data.transactions||[]).filter(t=>t.accountId===a.id).reduce((sum,t)=>{
+      if(t.type==='income') return sum+Number(t.amount||0);
+      if(t.type==='expense') return sum-Number(t.amount||0);
+      return sum;
+    },0);
+}
+
+function nextBillDate(b, from){
+  const d = new Date(from.getFullYear(), from.getMonth(), Math.min(Number(b.dueDay??b.day??1),28));
+  const freq = b.frequency || 'monthly';
+  while(d < from){
+    if(freq==='yearly') d.setFullYear(d.getFullYear()+1);
+    else if(freq==='quarterly') d.setMonth(d.getMonth()+3);
+    else d.setMonth(d.getMonth()+1);
+  }
+  return d;
+}
+
+function spendMonthTotals(){
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  const expenses = (data.transactions||[])
+    .filter(t=>t.type==='expense' && String(t.date||'').slice(0,7)===ym)
+    .reduce((s,t)=>s+moneyNok(t),0);
+  let budgetTotal = 0, budgetUsed = 0;
+  Object.entries(data.budgets||{}).forEach(([cat,val])=>{
+    budgetTotal += Number(val||0);
+    budgetUsed += (data.transactions||[])
+      .filter(t=>t.type==='expense' && (t.category??t.cat)===cat && String(t.date||'').slice(0,7)===ym)
+      .reduce((s,t)=>s+moneyNok(t),0);
+  });
+  return {expenses,budgetTotal,budgetUsed};
+}
+
+function renderSpend(){
+  const accounts = data.accounts||[];
+  const balance = accounts.reduce((s,a)=>s+accountBalance(a),0);
+  const now = new Date();
+  const horizon = new Date(now); horizon.setDate(now.getDate()+30);
+
+  let bills30 = 0;
+  (data.bills||[]).forEach(b=>{
+    const d = nextBillDate(b, now);
+    if(d <= horizon) bills30 += Number(b.amount||0);
+  });
+
+  const mt = spendMonthTotals();
+  const budgetLeft = mt.budgetTotal ? Math.max(0, mt.budgetTotal-mt.budgetUsed) : null;
+  const buffer = Number(data.spendSettings.buffer||0);
+
+  // Conservative recommendation: account balance minus bills due in next 30 days and buffer.
+  // If a monthly budget exists, also respect the lower of the remaining budget and the cash available.
+  const cashAfterBills = Math.max(0, balance-bills30-buffer);
+  const recommended = budgetLeft===null ? cashAfterBills : Math.min(cashAfterBills, Math.max(0,budgetLeft));
+
+  document.getElementById('spendBalance').textContent = fmtN(balance)+' kr';
+  document.getElementById('spendBills').textContent = fmtN(bills30)+' kr';
+  document.getElementById('spendBudget').textContent = budgetLeft===null ? 'Ikke satt' : fmtN(budgetLeft)+' kr';
+  document.getElementById('spendAvailable').textContent = fmtN(recommended)+' kr';
+  document.getElementById('spendBuffer').value = buffer;
+
+  document.getElementById('spendBreakdown').innerHTML = `
+    <div class="break-row"><span>Saldo på kontoer</span><strong>${fmtN(balance)} kr</strong></div>
+    <div class="break-row"><span>− Faste regninger neste 30 dager</span><strong>${fmtN(bills30)} kr</strong></div>
+    <div class="break-row"><span>− Sikkerhetsbuffer</span><strong>${fmtN(buffer)} kr</strong></div>
+    ${budgetLeft!==null ? `<div class="break-row"><span>→ Budsjett igjen denne måneden</span><strong>${fmtN(budgetLeft)} kr</strong></div>` : ''}
+    <div class="break-row total"><span>Anbefalt tilgjengelig</span><strong>${fmtN(recommended)} kr</strong></div>
+  `;
+}
+
+document.getElementById('saveSpendSettings').addEventListener('click',()=>{
+  data.spendSettings.buffer=Number(document.getElementById('spendBuffer').value||0);
+  save(); render();
+});
+
+
+
+function scenarioBaseBalance(){
+  return (data.accounts||[]).reduce((sum,a)=>sum+accountBalance(a),0);
+}
+
+function scenarioBills(){
+  const now = new Date(), horizon = new Date(now);
+  horizon.setDate(now.getDate()+30);
+  let total=0;
+  (data.bills||[]).forEach(b=>{
+    const d=nextBillDate(b,now);
+    if(d<=horizon) total+=Number(b.amount||0);
+  });
+  return total;
+}
+
+el('scenarioForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const extraExpense=readAmount('scExtraExpense');
+  const monthlySaving=readAmount('scMonthlySaving');
+  const months=Math.max(1,readInteger('scMonths')||1);
+  const extraIncome=readAmount('scExtraIncome');
+  const start=scenarioBaseBalance();
+  const knownBills=scenarioBills();
+  const projected=start+extraIncome-extraExpense-knownBills-(monthlySaving*months);
+  const savingsAdded=monthlySaving*months;
+  const netChange=extraIncome-extraExpense-savingsAdded;
+  el('scenarioResult').innerHTML=`
+    <div class="scenario-number">${fmtN(projected)} kr</div>
+    <p><strong>Estimert saldo etter ${months} måned${months==1?'':'er'}:</strong> ${fmtN(projected)} kr</p>
+    <div class="breakdown">
+      <div class="break-row"><span>Startsaldo på kontoer</span><strong>${fmtN(start)} kr</strong></div>
+      <div class="break-row"><span>+ Engangsinntekt</span><strong>${fmtN(extraIncome)} kr</strong></div>
+      <div class="break-row"><span>− Ekstra utgift</span><strong>${fmtN(extraExpense)} kr</strong></div>
+      <div class="break-row"><span>− Kjente regninger neste 30 dager</span><strong>${fmtN(knownBills)} kr</strong></div>
+      <div class="break-row"><span>− Ekstra sparing</span><strong>${fmtN(savingsAdded)} kr</strong></div>
+      <div class="break-row total"><span>Netto endring fra scenarioet</span><strong>${fmtN(netChange)} kr</strong></div>
+    </div>
+    <p class="muted">Dette er et «hva hvis»-regnestykke og endrer ikke transaksjonene dine.</p>`;
+});
+
+el('goalCalcForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const target=readAmount('goalCalcTarget'), current=readAmount('goalCalcCurrent'), monthly=readAmount('goalCalcMonthly');
+  if(target<=current){el('goalCalcResult').innerHTML='<strong>🎉 Sparemålet er allerede nådd!</strong>';return;}
+  if(monthly<=0){el('goalCalcResult').innerHTML='<strong>⚠️ Skriv inn et månedlig sparebeløp større enn 0.</strong>';return;}
+  const months=Math.ceil((target-current)/monthly);
+  const date=new Date();date.setMonth(date.getMonth()+months);
+  const formatted=date.toLocaleDateString('nb-NO',{month:'long',year:'numeric'});
+  el('goalCalcResult').innerHTML=`<strong>🎯 Du når målet om ca. ${months} måned${months==1?'':'er'}.</strong><br>Omtrent i <strong>${formatted}</strong>, hvis du sparer ${fmtN(monthly)} kr per måned.`;
+});
+
+
+let calendarMonth = new Date();
+calendarMonth.setDate(1);
+
+function calendarTransactionsForMonth(y,m){
+  return (data.transactions||[]).filter(t=>{
+    const d=new Date((t.date||'')+'T12:00:00');
+    return d.getFullYear()===y && d.getMonth()===m;
+  });
+}
+
+function calendarBillsForMonth(y,m){
+  const out=[];
+  (data.bills||[]).forEach(b=>{
+    const freq=b.frequency||'monthly';
+    const due=Number(b.dueDay??b.day??1);
+    if(freq==='monthly'){
+      out.push({day:Math.min(due,calendarDaysInMonth(y,m)),name:b.name,amount:Number(b.amount||0),type:'bill'});
+    } else if(freq==='quarterly'){
+      // Show quarterly bills in months that match their next occurrence from the current month.
+      const now=new Date();
+      const next=nextBillDate(b,new Date(y,m,1));
+      if(next.getFullYear()===y && next.getMonth()===m)
+        out.push({day:Math.min(next.getDate(),calendarDaysInMonth(y,m)),name:b.name,amount:Number(b.amount||0),type:'bill'});
+    } else if(freq==='yearly'){
+      const next=nextBillDate(b,new Date(y,m,1));
+      if(next.getFullYear()===y && next.getMonth()===m)
+        out.push({day:Math.min(next.getDate(),calendarDaysInMonth(y,m)),name:b.name,amount:Number(b.amount||0),type:'bill'});
+    }
+  });
+  return out;
+}
+
+function calendarDaysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
+
+function renderCalendar(){
+  const y=calendarMonth.getFullYear(), m=calendarMonth.getMonth();
+  const monthName=calendarMonth.toLocaleDateString('nb-NO',{month:'long',year:'numeric'});
+  document.getElementById('calTitle').textContent=monthName.charAt(0).toUpperCase()+monthName.slice(1);
+
+  const tx=calendarTransactionsForMonth(y,m);
+  const bills=calendarBillsForMonth(y,m);
+  const byDay={};
+  [...tx.map(t=>({day:new Date((t.date||'')+'T12:00:00').getDate(),name:t.description||t.desc||'Transaksjon',amount:moneyNok(t),type:t.type})),...bills]
+    .forEach(x=>{(byDay[x.day] ||= []).push(x)});
+
+  const first=new Date(y,m,1).getDay();
+  const mondayFirst=(first+6)%7;
+  const days=calendarDaysInMonth(y,m);
+  const weekdays=['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+
+  let html='<div class="calendar-grid">';
+  weekdays.forEach(w=>html+=`<div class="cal-weekday">${w}</div>`);
+  for(let i=0;i<mondayFirst;i++) html+='<div class="cal-empty"></div>';
+  for(let d=1;d<=days;d++){
+    const entries=byDay[d]||[];
+    html+=`<div class="cal-day"><div class="cal-date">${d}</div>`;
+    entries.forEach(e=>{
+      const cls=e.type==='income'?'income':(e.type==='expense'?'expense':'bill');
+      const sign=e.type==='income'?'+':'−';
+      html+=`<div class="cal-entry ${cls}" title="${esc(e.name)}">${sign}${fmtN(e.amount)} kr<br><span>${esc(e.name)}</span></div>`;
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  document.getElementById('financialCalendar').innerHTML=html;
+
+  const income=tx.filter(t=>t.type==='income').reduce((a,t)=>a+moneyNok(t),0);
+  const expenses=tx.filter(t=>t.type==='expense').reduce((a,t)=>a+moneyNok(t),0);
+  const billTotal=bills.reduce((a,b)=>a+b.amount,0);
+  const net=income-expenses-billTotal;
+  document.getElementById('calSummary').innerHTML=`
+    <div class="breakdown">
+      <div class="break-row"><span>Registrerte inntekter</span><strong>+${fmtN(income)} kr</strong></div>
+      <div class="break-row"><span>Registrerte utgifter</span><strong>−${fmtN(expenses)} kr</strong></div>
+      <div class="break-row"><span>Faste regninger</span><strong>−${fmtN(billTotal)} kr</strong></div>
+      <div class="break-row total"><span>Forventet netto</span><strong>${net>=0?'+':''}${fmtN(net)} kr</strong></div>
+    </div>`;
+}
+
+document.getElementById('calPrev').addEventListener('click',()=>{
+  calendarMonth.setMonth(calendarMonth.getMonth()-1); renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click',()=>{
+  calendarMonth.setMonth(calendarMonth.getMonth()+1); renderCalendar();
+});
+
+
+function monthlyAverageNet(){
+  const now=new Date();
+  const months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const ym=d.toISOString().slice(0,7);
+    const income=(data.transactions||[]).filter(t=>t.type==='income' && String(t.date||'').slice(0,7)===ym).reduce((a,t)=>a+moneyNok(t),0);
+    const expense=(data.transactions||[]).filter(t=>t.type==='expense' && String(t.date||'').slice(0,7)===ym).reduce((a,t)=>a+moneyNok(t),0);
+    months.push(income-expense);
+  }
+  const nonZero=months.filter(x=>x!==0);
+  return nonZero.length ? nonZero.reduce((a,b)=>a+b,0)/nonZero.length : 0;
+}
+
+function recurringMonthlyImpact(){
+  let total=0;
+  (data.bills||[]).forEach(b=>{
+    const amount=Number(b.amount||0), f=b.frequency||'monthly';
+    if(f==='yearly') total+=amount/12;
+    else if(f==='quarterly') total+=amount/3;
+    else total+=amount;
+  });
+  return total;
+}
+
+function renderForecast(){
+  const start=(data.accounts||[]).reduce((s,a)=>s+accountBalance(a),0);
+  const historicalNet=monthlyAverageNet();
+  const recurring=recurringMonthlyImpact();
+
+  // Use historical net when there is transaction history; subtract recurring bills
+  // because recurring bills may not yet be entered as transactions.
+  const baseNet=historicalNet-recurring;
+  const rows=[];
+  let balance=start;
+  let low=start;
+
+  const now=new Date();
+  for(let i=0;i<12;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i+1,1);
+    const label=d.toLocaleDateString('nb-NO',{month:'short',year:'numeric'});
+    balance += baseNet;
+    low=Math.min(low,balance);
+    rows.push({label,balance,net:baseNet});
+  }
+
+  document.getElementById('forecastStart').textContent=fmtN(start)+' kr';
+  document.getElementById('forecastEnd').textContent=fmtN(rows[11]?.balance||start)+' kr';
+  document.getElementById('forecastNet').textContent=(baseNet>=0?'+':'')+fmtN(baseNet)+' kr';
+  document.getElementById('forecastLow').textContent=fmtN(low)+' kr';
+
+  document.getElementById('forecastTable').innerHTML=`
+    <div class="forecast-table">
+      <div class="frow fhead"><span>Måned</span><span>Endring</span><span>Estimert saldo</span></div>
+      ${rows.map(r=>`<div class="frow"><span>${r.label}</span><strong>${r.net>=0?'+':''}${fmtN(r.net)} kr</strong><strong>${fmtN(r.balance)} kr</strong></div>`).join('')}
+    </div>`;
+
+  const warnings=[];
+  if(low<0) warnings.push('<div class="alert-box">🚨 Prognosen går under 0 kr i løpet av perioden.</div>');
+  else if(low<Number(data.spendSettings?.buffer||0)) warnings.push('<div class="alert-box">⚠️ Prognosen går under sikkerhetsbufferen din.</div>');
+  else warnings.push('<div class="good-box">🎉 Prognosen holder seg over sikkerhetsbufferen i hele perioden.</div>');
+
+  if(!rows.length) warnings.push('<p class="muted">Legg inn noen transaksjoner for en mer meningsfull prognose.</p>');
+  document.getElementById('forecastWarnings').innerHTML=warnings.join('');
+
+  drawForecastChart(start,rows);
+}
+
+function drawForecastChart(start,rows){
+  const canvas=document.getElementById('forecastCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const vals=[start,...rows.map(r=>r.balance)];
+  const min=Math.min(...vals,0), max=Math.max(...vals,1);
+  const pad={l:70,r:25,t:25,b:55};
+  const xStep=(w-pad.l-pad.r)/(vals.length-1 || 1);
+  const y=v=>pad.t+(max-v)/(max-min || 1)*(h-pad.t-pad.b);
+
+  ctx.strokeStyle='rgba(127,127,127,.25)';
+  ctx.lineWidth=1;
+  for(let i=0;i<5;i++){
+    const yy=pad.t+i*(h-pad.t-pad.b)/4;
+    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();
+    const val=max-(max-min)*i/4;
+    ctx.fillStyle='rgba(80,80,80,.8)';
+    ctx.font='12px sans-serif';
+    ctx.fillText(fmtN(val),8,yy+4);
+  }
+
+  ctx.strokeStyle='rgba(60,60,60,.9)';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const xx=pad.l+i*xStep, yy=y(v);
+    if(i===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle='rgba(60,60,60,.95)';
+  vals.forEach((v,i)=>{
+    const xx=pad.l+i*xStep, yy=y(v);
+    ctx.beginPath();ctx.arc(xx,yy,4,0,Math.PI*2);ctx.fill();
+    if(i>0){
+      ctx.font='11px sans-serif';
+      ctx.fillText(rows[i-1].label,xx-18,h-22);
+    }
+  });
+}
+
+
+function currentMonthStats(){
+  const ym=new Date().toISOString().slice(0,7);
+  const tx=(data.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===ym);
+  const income=tx.filter(t=>t.type==='income').reduce((a,t)=>a+moneyNok(t),0);
+  const expense=tx.filter(t=>t.type==='expense').reduce((a,t)=>a+moneyNok(t),0);
+  const cats={};
+  tx.filter(t=>t.type==='expense').forEach(t=>cats[t.category||'Uten kategori']=(cats[t.category||'Uten kategori']||0)+moneyNok(t));
+  const top=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0]||null;
+  return {income,expense,net:income-expense,cats,top};
+}
+
+function renderAssistant(){
+  const st=currentMonthStats();
+  const savingsRate=st.income>0 ? Math.max(0,(st.income-st.expense)/st.income*100) : 0;
+
+  // Mirror the 12-month forecast logic without depending on the DOM.
+  const start=(data.accounts||[]).reduce((sum,a)=>sum+accountBalance(a),0);
+  const hist=monthlyAverageNet();
+  const recurring=recurringMonthlyImpact();
+  const baseNet=hist-recurring;
+  const forecast=start+baseNet*12;
+
+  document.getElementById('aiMonthNet').textContent=(st.net>=0?'+':'')+fmtN(st.net)+' kr';
+  document.getElementById('aiTopCategory').textContent=st.top ? st.top[0] : '—';
+  document.getElementById('aiSaveRate').textContent=fmtN(savingsRate)+' %';
+  document.getElementById('aiForecast').textContent=fmtN(forecast)+' kr';
+
+  const insights=[];
+  if(st.income===0 && st.expense===0){
+    insights.push('👋 Det er ikke registrert noen transaksjoner denne måneden ennå.');
+  } else {
+    if(st.net>0) insights.push(`💚 Du har et positivt månedsresultat på <strong>${fmtN(st.net)} kr</strong>.`);
+    else if(st.net<0) insights.push(`⚠️ Utgiftene dine er <strong>${fmtN(Math.abs(st.net))} kr</strong> høyere enn inntektene som er registrert denne måneden.`);
+    else insights.push('➖ Inntekter og utgifter som er registrert denne måneden går omtrent i balanse.');
+    if(st.top) insights.push(`🛒 <strong>${esc(st.top[0])}</strong> er den største utgiftskategorien med ${fmtN(st.top[1])} kr.`);
+    if(savingsRate>=20) insights.push(`🎯 Du har en registrert sparemargin på rundt <strong>${fmtN(savingsRate)} %</strong> denne måneden.`);
+    else if(st.income>0 && savingsRate<10) insights.push('💡 Sparemarginen er ganske liten denne måneden. Selv en liten reduksjon i én utgiftskategori kan gjøre forskjell.');
+  }
+  const buffer=Number(data.spendSettings?.buffer||0);
+  if(start<buffer && buffer>0) insights.push('🛟 Saldoen på kontoene dine er lavere enn sikkerhetsbufferen du har satt.');
+  if(forecast<0) insights.push('🚨 Den registrerte 12-måneders prognosen går under null.');
+  else if(buffer>0 && forecast<buffer) insights.push('⚠️ 12-måneders prognosen ender under sikkerhetsbufferen din.');
+
+  document.getElementById('aiInsights').innerHTML=insights.map(x=>`<div class="insight">${x}</div>`).join('');
+
+  const suggestions=[];
+  if(st.top) suggestions.push(`🔎 Se nærmere på <strong>${esc(st.top[0])}</strong>. Hvis du kutter 500 kr i måneden der, tilsvarer det ${fmtN(500*12)} kr på ett år.`);
+  if(st.net>0) suggestions.push(`💰 Et mulig mål er å sette av ${fmtN(Math.max(500,Math.round(st.net*0.1/100)*100))} kr ekstra denne måneden.`);
+  if(!data.bills || data.bills.length===0) suggestions.push('🧾 Registrer faste regninger for å få en mer presis prognose.');
+  if(!data.budgets || Object.keys(data.budgets).length===0) suggestions.push('📊 Sett noen kategoribudsjetter for å få bedre kontroll på hvor mye du kan bruke.');
+  if(!suggestions.length) suggestions.push('🎉 Fortsett å registrere økonomien din – da får assistenten mer å analysere.');
+
+  document.getElementById('aiSuggestions').innerHTML=suggestions.map(x=>`<div class="insight">${x}</div>`).join('');
+}
+
+
+function dashboardData(){
+  const now=new Date();
+  const horizon=new Date(now); horizon.setDate(now.getDate()+30);
+  const balance=(data.accounts||[]).reduce((s,a)=>s+accountBalance(a),0);
+  let bills=0, upcoming=[];
+  (data.bills||[]).forEach(b=>{
+    const d=nextBillDate(b,now);
+    if(d<=horizon){
+      const amount=Number(b.amount||0);
+      bills+=amount;
+      upcoming.push({date:d,name:b.name,amount});
+    }
+  });
+  upcoming.sort((a,b)=>a.date-b.date);
+
+  const credit=(data.creditCards||[]).reduce((s,c)=>s+Number(c.balance||0),0);
+  const loans=(data.loans||[]).reduce((s,l)=>s+Number(l.balance||0),0);
+  const debt=credit+loans;
+  const other=(data.assets||[]).reduce((s,a)=>s+Number(a.value||0),0);
+  const worth=balance+other-debt;
+
+  const buffer=Number(data.spendSettings?.buffer||0);
+  const available=Math.max(0,balance-bills-buffer);
+
+  return {balance,bills,upcoming,debt,worth,buffer,available,credit,loans};
+}
+
+function renderDashboard(){
+  const d=dashboardData();
+  document.getElementById('dashAvailable').textContent=fmtN(d.available)+' kr';
+  document.getElementById('dashBills').textContent=fmtN(d.bills)+' kr';
+  document.getElementById('dashDebt').textContent=fmtN(d.debt)+' kr';
+  document.getElementById('dashWorth').textContent=fmtN(d.worth)+' kr';
+
+  let statusClass='status-good', statusTitle='🟢 Ser bra ut';
+  let statusText='Du har god dekning for de registrerte regningene de neste 30 dagene.';
+  if(d.balance<d.bills){
+    statusClass='status-alert'; statusTitle='🔴 Følg med';
+    statusText='Saldoen på kontoene dine er lavere enn de registrerte regningene de neste 30 dagene.';
+  } else if(d.buffer>0 && d.available<d.buffer){
+    statusClass='status-warn'; statusTitle='🟡 Følg litt med';
+    statusText='Etter registrerte regninger ligger disponibelt beløp under sikkerhetsbufferen din.';
+  } else if(d.debt>0 && d.credit>0){
+    statusClass='status-warn'; statusTitle='🟡 Kredittkortgjeld';
+    statusText=`Du har ${fmtN(d.credit)} kr i registrert kredittkortsaldo.`;
+  }
+  document.getElementById('dashStatus').innerHTML=`<div class="${statusClass}"><strong>${statusTitle}</strong><p>${statusText}</p></div>`;
+
+  document.getElementById('dashUpcoming').innerHTML=d.upcoming.length
+    ? d.upcoming.slice(0,6).map(x=>`<div class="dash-row"><span>${x.date.toLocaleDateString('nb-NO',{day:'numeric',month:'short'})} · ${esc(x.name)}</span><strong>${fmtN(x.amount)} kr</strong></div>`).join('')
+    : '<p class="muted">Ingen registrerte faste regninger de neste 30 dagene. 🎉</p>';
+
+  const goals=data.goals||[];
+  document.getElementById('dashProgress').innerHTML=goals.length
+    ? goals.slice(0,5).map(g=>{
+        const target=Number(g.target||0), saved=Number(g.saved??g.current??0);
+        const pct=target?Math.min(100,saved/target*100):0;
+        return `<div class="goal-mini"><div><strong>${esc(g.name)}</strong><span>${fmtN(saved)} / ${fmtN(target)} kr</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div><small>${fmtN(pct)} %</small></div>`;
+      }).join('')
+    : '<p class="muted">Legg inn et sparemål for å se fremgangen her. 🎯</p>';
+
+  const tips=[];
+  const st=currentMonthStats();
+  if(st.top) tips.push(`🛒 Største utgiftskategori denne måneden: <strong>${esc(st.top[0])}</strong>.`);
+  if(d.bills>0) tips.push(`📅 Du har ${fmtN(d.bills)} kr i registrerte faste regninger de neste 30 dagene.`);
+  if(d.buffer>0) tips.push(`🛟 Sikkerhetsbufferen din er satt til ${fmtN(d.buffer)} kr.`);
+  if(d.worth>0) tips.push(`📈 Nettoformuen din er foreløpig ${fmtN(d.worth)} kr.`);
+  if(!tips.length) tips.push('✨ Legg inn noen transaksjoner, kontoer eller regninger, så fylles kontrollpanelet med mer informasjon.');
+  document.getElementById('dashTips').innerHTML=tips.map(x=>`<div class="insight">${x}</div>`).join('');
+}
+
+
+function renderMobilePreview(){
+  const d=dashboardData();
+  document.getElementById('mobileAvailable').textContent=fmtN(d.available)+' kr';
+  const first=d.upcoming[0];
+  document.getElementById('mobileNextBill').textContent=first
+    ? `${first.date.toLocaleDateString('nb-NO',{day:'numeric',month:'short'})} · ${fmtN(first.amount)} kr`
+    : 'Ingen kommende';
+  const goals=data.goals||[];
+  if(goals.length){
+    const g=goals[0];
+    const pct=Number(g.target||0)?Math.min(100,Number(g.saved??g.current??0)/Number(g.target)*100):0;
+    document.getElementById('mobileGoal').textContent=`${esc(g.name)} · ${fmtN(pct)} %`;
+  } else {
+    document.getElementById('mobileGoal').textContent='Legg til et sparemål';
+  }
+}
+
+
+function loadNhostConfig(){
+  try{return JSON.parse(localStorage.getItem('mo6_nhost_config')||'{}')}catch(e){return {}}
+}
+function saveNhostConfig(){
+  const cfg={
+    subdomain:document.getElementById('nhostSubdomain').value.trim(),
+    region:document.getElementById('nhostRegion').value
+  };
+  localStorage.setItem('mo6_nhost_config',JSON.stringify(cfg));
+  renderNhost();
+  alert('Nhost-oppsettet er lagret lokalt. ☁️');
+}
+function nhostUrls(cfg){
+  const base=`https://${cfg.subdomain}`;
+  return {
+    auth:`${base}.auth.${cfg.region}.nhost.run/v1`,
+    graphql:`${base}.graphql.${cfg.region}.nhost.run/v1`
+  };
+}
+
+function saveSession(session){ localStorage.setItem('mo6_nhost_session',JSON.stringify(session)); }
+function getSession(){ try{return JSON.parse(localStorage.getItem('mo6_nhost_session')||'null')}catch(e){return null} }
+async function refreshNhostSession(){
+  const cfg=loadNhostConfig(); const sess=getSession();
+  if(!cfg.subdomain||!sess?.refreshToken) return null;
+  try{
+    const r=await fetch(nhostUrls(cfg).auth+'/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refreshToken:sess.refreshToken})});
+    const body=await r.json(); if(!r.ok) throw new Error(body?.error?.message||body?.message||('HTTP '+r.status));
+    const next=body?.session||body; saveSession(next); return next;
+  }catch(e){ return null; }
+}
+async function graphqlRequest(query,variables={},retry=true){
+  const cfg=loadNhostConfig(); if(!cfg.subdomain) throw new Error('Legg inn Nhost subdomain først.');
+  let sess=getSession(); if(!sess?.accessToken) throw new Error('Logg inn i Nhost først.');
+  const send=async token=>await fetch(nhostUrls(cfg).graphql,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({query,variables})});
+  let r=await send(sess.accessToken); let body={}; try{body=await r.json()}catch(e){}
+  const gqlMessages=(body?.errors||[]).map(x=>x?.message||'').join(' · ');
+  const jwtExpired=(/JWTExpired|JWT expired|expired/i).test(gqlMessages);
+  if(retry && (r.status===401 || jwtExpired)){
+    const fresh=await refreshNhostSession();
+    if(fresh?.accessToken){return graphqlRequest(query,variables,false)}
+  }
+  if(!r.ok) throw new Error(body?.errors?.[0]?.message||('GraphQL HTTP '+r.status));
+  if(body.errors?.length) throw new Error(gqlMessages);
+  return body.data;
+}
+function snapshotPayload(){
+  return {
+    version:37,
+    savedAt:new Date().toISOString(),
+    transactions:tx,
+    categories:cats,
+    accounts,
+    budgets:bud,
+    savingsGoals:goals,
+    transfers,
+    recurringBills:bills,
+    creditCards:data.creditCards||[],
+    loans:data.loans||[],
+    assets:data.assets||[],
+    spendSettings:data.spendSettings||{buffer:0}
+  };
+}
+let autoSyncTimer=null;
+let autoSyncBusy=false;
+function autoSyncEnabled(){return localStorage.getItem('mo6_auto_sync')==='1';}
+function lastCloudSync(){return localStorage.getItem('mo6_nhost_last_sync_at')||'';}
+function setAutoSyncStatus(html){const el=document.getElementById('autoSyncStatus');if(el)el.innerHTML=html;}
+function markLocalDirty(){localStorage.setItem('mo6_nhost_local_dirty','1'); scheduleAutoSync();}
+function localDirty(){return localStorage.getItem('mo6_nhost_local_dirty')==='1';}
+async function getCloudMeta(){const result=await graphqlRequest(`query GetAppStateMeta{app_state(limit:1){id updated_at}}`);return result?.app_state?.[0]||null;}
+async function cloudBackup(opts={auto:false}){
+  const payload=snapshotPayload();
+  const existing=await graphqlRequest(`query GetAppStateId{app_state(limit:1){id updated_at}}`);
+  const row=existing?.app_state?.[0];
+  const last=lastCloudSync();
+  if(row?.updated_at && last && new Date(row.updated_at).getTime()>new Date(last).getTime()+1000){
+    setAutoSyncStatus('<div class="sync-neutral">⚠️ Konfliktbeskyttelse: Skydata er endret siden siste synk. Ingen lokale data ble overskrevet i skyen. Velg «Hent sikkerhetskopi» hvis du vil bruke skyversjonen.</div>');
+    if(!opts.auto) throw new Error('Skydata er endret siden siste synk. Konfliktbeskyttelse stoppet overskriving.');
+    return false;
+  }
+  let serverUpdatedAt='';
+  if(row?.id){
+    const q=`mutation UpdateAppState($id:uuid!,$data:jsonb!){update_app_state_by_pk(pk_columns:{id:$id},_set:{data:$data}){id updated_at}}`;
+    const out=await graphqlRequest(q,{id:row.id,data:payload}); serverUpdatedAt=out?.update_app_state_by_pk?.updated_at||'';
+  }else{
+    const q=`mutation InsertAppState($object:app_state_insert_input!){insert_app_state_one(object:$object){id updated_at}}`;
+    const out=await graphqlRequest(q,{object:{data:payload}}); serverUpdatedAt=out?.insert_app_state_one?.updated_at||'';
+  }
+  localStorage.setItem('mo6_nhost_last_sync_at',serverUpdatedAt||new Date().toISOString());
+  localStorage.removeItem('mo6_nhost_local_dirty');
+  document.getElementById('syncInfo').innerHTML='<div class="sync-good">🟢 Synkronisert til Nhost. '+new Date(payload.savedAt).toLocaleString('nb-NO')+'</div>';
+  setAutoSyncStatus(autoSyncEnabled()?'<div class="sync-good">🔄 Automatisk synk er aktiv.</div>':'');
+  return true;
+}
+async function checkCloudChanges(){
+  if(!autoSyncEnabled()||autoSyncBusy)return;
+  try{
+    const row=await getCloudMeta(); if(!row?.updated_at)return;
+    const last=lastCloudSync();
+    if(last && new Date(row.updated_at).getTime()>new Date(last).getTime()+1000){
+      if(localDirty()){setAutoSyncStatus('<div class="sync-neutral">⚠️ Skyen er nyere enn lokal data. Automatisk overskriving er stoppet — bruk «Hent sikkerhetskopi» når du har kontrollert endringen.</div>');}
+      else{setAutoSyncStatus('<div class="sync-neutral">☁️ Nyere data finnes i Nhost. Trykk «Hent sikkerhetskopi» for å hente dem trygt.</div>');}
+    }
+  }catch(e){/* silent background check */}
+}
+function scheduleAutoSync(){
+  if(!autoSyncEnabled()||autoSyncBusy)return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer=setTimeout(async()=>{
+    if(!localDirty()||!getSession()?.accessToken)return;
+    autoSyncBusy=true;
+    try{await cloudBackup({auto:true});}catch(e){setAutoSyncStatus('<div class="sync-neutral">⚠️ Automatisk synk venter: '+esc(e.message)+'</div>');}
+    finally{autoSyncBusy=false;}
+  },1800);
+}
+
+async function cloudRestore(){
+  const q=`query GetAppState{app_state(limit:1){data updated_at}}`;
+  const result=await graphqlRequest(q); const row=result?.app_state?.[0];
+  if(!row?.data) throw new Error('Fant ingen sky-sikkerhetskopi.');
+  const b=row.data;
+  if(!confirm('Dette erstatter de lokale økonomidataene med sky-sikkerhetskopien fra '+new Date(row.updated_at).toLocaleString('nb-NO')+'. Fortsette?')) return;
+  window.__restoringCloud=true;
+  tx=Array.isArray(b.transactions)?b.transactions:[];
+  cats=Array.isArray(b.categories)?b.categories:cats;
+  accounts=Array.isArray(b.accounts)?b.accounts:[];
+  bud=Array.isArray(b.budgets)?b.budgets:[];
+  goals=Array.isArray(b.savingsGoals)?b.savingsGoals:[];
+  transfers=Array.isArray(b.transfers)?b.transfers:[];
+  bills=Array.isArray(b.recurringBills)?b.recurringBills:[];
+  data.creditCards=Array.isArray(b.creditCards)?b.creditCards:[];
+  data.loans=Array.isArray(b.loans)?b.loans:[];
+  data.assets=Array.isArray(b.assets)?b.assets:[];
+  data.spendSettings=(b.spendSettings&&typeof b.spendSettings==='object')?b.spendSettings:{buffer:0};
+  save(); render();
+  window.__restoringCloud=false;
+  localStorage.setItem('mo6_nhost_last_sync_at',row.updated_at);
+  localStorage.removeItem('mo6_nhost_local_dirty');
+  document.getElementById('syncInfo').innerHTML='<div class="sync-good">🟢 Lokal data er hentet fra Nhost-sikkerhetskopien.</div>';
+  setAutoSyncStatus(autoSyncEnabled()?'<div class="sync-good">🔄 Automatisk synk er aktiv.</div>':'');
+}
+function renderNhost(){
+  const cfg=loadNhostConfig();
+  const status=document.getElementById('syncStatus');
+  if(!cfg.subdomain){
+    status.innerHTML='<div class="sync-neutral">⚪ Lokal modus – Nhost er ikke konfigurert ennå.</div>';
+  }else{
+    status.innerHTML='<div class="sync-good">🟢 Nhost-oppsett lagret lokalt · '+cfg.region+'</div>';
+    document.getElementById('nhostSubdomain').value=cfg.subdomain;
+    document.getElementById('nhostRegion').value=cfg.region||'eu-central-1';
+  }
+}
+async function nhostRequest(path, body){
+  const cfg=loadNhostConfig();
+  if(!cfg.subdomain) throw new Error('Legg inn Nhost subdomain først.');
+  const urls=nhostUrls(cfg);
+  const r=await fetch(urls.auth+path,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  let data={};
+  try{data=await r.json()}catch(e){}
+  if(!r.ok) throw new Error(data?.error?.message||data?.message||('HTTP '+r.status));
+  return data;
+}
+function renderAuthStatus(text, good=false){
+  document.getElementById('nhostAuthStatus').innerHTML=
+    `<div class="${good?'sync-good':'sync-neutral'}">${text}</div>`;
+}
+document.getElementById('saveNhostConfig').addEventListener('click',saveNhostConfig);
+
+document.getElementById('testNhost').addEventListener('click',async()=>{
+  try{
+    const cfg=loadNhostConfig();
+    if(!cfg.subdomain) throw new Error('Legg inn Nhost subdomain først.');
+    const r=await fetch(nhostUrls(cfg).graphql,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query:'query { __typename }'})
+    });
+    if(r.ok){
+      document.getElementById('syncInfo').innerHTML='<div class="sync-good">🟢 Nhost GraphQL-endepunkt svarer. 🎉</div>';
+    }else{
+      document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">🟡 Nhost svarte med HTTP '+r.status+'. Sjekk subdomain og region.</div>';
+    }
+  }catch(e){
+    document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+e.message+'</div>';
+  }
+});
+
+document.getElementById('nhostSignUp').addEventListener('click',async()=>{
+  try{
+    const email=document.getElementById('nhostEmail').value.trim();
+    const password=document.getElementById('nhostPassword').value;
+    if(!email||!password) throw new Error('Skriv inn e-post og passord.');
+    const data=await nhostRequest('/signup/email-password',{email,password,options:{allowedRoles:['me','user'],defaultRole:'user'}});
+    renderAuthStatus(data?.session?'🟢 Konto opprettet og innlogget.':'🟢 Konto opprettet. Sjekk e-posten hvis verifisering kreves.',true);
+  }catch(e){renderAuthStatus('⚠️ '+e.message)}
+});
+
+document.getElementById('nhostSignIn').addEventListener('click',async()=>{
+  try{
+    const email=document.getElementById('nhostEmail').value.trim();
+    const password=document.getElementById('nhostPassword').value;
+    if(!email||!password) throw new Error('Skriv inn e-post og passord.');
+    const data=await nhostRequest('/signin/email-password',{email,password});
+    if(data?.session){
+      localStorage.setItem('mo6_nhost_session',JSON.stringify(data.session));
+      renderAuthStatus('🟢 Innlogget i Nhost. 🎉',true);
+    }else throw new Error('Ingen aktiv sesjon ble returnert.');
+  }catch(e){renderAuthStatus('⚠️ '+e.message)}
+});
+
+document.getElementById('nhostSignOut').addEventListener('click',async()=>{
+  const cfg=loadNhostConfig();
+  const session=JSON.parse(localStorage.getItem('mo6_nhost_session')||'null');
+  if(!cfg.subdomain||!session?.refreshToken){
+    localStorage.removeItem('mo6_nhost_session');
+    renderAuthStatus('⚪ Ingen lokal Nhost-sesjon å logge ut av.');
+    return;
+  }
+  try{
+    await fetch(nhostUrls(cfg).auth+'/signout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.accessToken},
+      body:JSON.stringify({refreshToken:session.refreshToken})
+    });
+  }catch(e){}
+  localStorage.removeItem('mo6_nhost_session');
+  renderAuthStatus('⚪ Logget ut.');
+});
+
+document.getElementById('prepareSync').addEventListener('click',()=>{
+  const cfg=loadNhostConfig();
+  const session=JSON.parse(localStorage.getItem('mo6_nhost_session')||'null');
+  document.getElementById('syncInfo').innerHTML=
+    `<div class="sync-neutral">🧩 Klar for neste steg: ${cfg.subdomain?'Nhost er konfigurert':'Nhost mangler oppsett'} · ${session?'brukerøkt finnes lokalt':'ingen innlogget bruker'} · lokale data er urørt.</div>`;
+});
+
+document.getElementById('cloudBackup').addEventListener('click',async()=>{try{document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⏳ Lagrer sikkerhetssynk…</div>';await cloudBackup()}catch(e){document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}});
+document.getElementById('cloudRestore').addEventListener('click',async()=>{try{document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⏳ Henter sikkerhetskopi…</div>';await cloudRestore()}catch(e){document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}});
+const autoSyncEl=document.getElementById('autoSync');
+if(autoSyncEl){autoSyncEl.checked=autoSyncEnabled(); autoSyncEl.addEventListener('change',()=>{localStorage.setItem('mo6_auto_sync',autoSyncEl.checked?'1':'0'); if(autoSyncEl.checked){setAutoSyncStatus('<div class="sync-good">🔄 Automatisk synk er aktivert. Endringer synkroniseres etter kort ventetid, med konfliktbeskyttelse.</div>'); scheduleAutoSync();}else{clearTimeout(autoSyncTimer);setAutoSyncStatus('<div class="sync-neutral">⏸️ Automatisk synk er satt på pause.</div>');}});}
+if(autoSyncEnabled()){setAutoSyncStatus('<div class="sync-good">🔄 Automatisk synk er aktiv.</div>'); setInterval(checkCloudChanges,30000);}
+renderNhost();
+
+function render(){
+  renderMobilePreview();
+  renderDashboard();
+  renderDebt();
+  renderAssistant();
+  renderForecast();
+  renderCalendar();
+  renderSpend();
+fillSelects();renderBills();renderAnalytics();let ym=new Date().toISOString().slice(0,7),allMonth=tx.filter(x=>x.date.slice(0,7)===ym);fillFilters();let items=filteredItems(allMonth);
+let inc=allMonth.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),exp=allMonth.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0);
+month.textContent=new Date().toLocaleDateString('nb-NO',{month:'long',year:'numeric'});income.textContent=kr(inc);expense.textContent=kr(exp);balance.textContent=kr(inc-exp);el('overviewAccountBalance').textContent=kr(accounts.reduce((s,a)=>s+acctBalance(a),0));
+accountSummary.innerHTML=accounts.map(a=>'<div class="row"><div class="rowtop"><b>'+esc(a.bank)+' – '+esc(a.name)+'</b><strong>'+kr(acctBalance(a))+'</strong></div></div>').join('')||'<div class="empty">Ingen kontoer ennå.</div>';
+accountsList.innerHTML=accounts.map(a=>'<div class="bankcard"><h3>'+esc(a.bank)+'</h3><div class="muted">'+esc(a.name)+'</div><div class="value">'+kr(acctBalance(a))+'</div><small>Startsaldo: '+kr(a.opening)+'</small><p><button class="secondary" onclick="openAccount(\''+a.id+'\')">✏️ Rediger</button> <button class="danger" onclick="deleteAccount(\''+a.id+'\')">Slett</button></p></div>').join('')||'<div class="empty">Legg til din første konto.</div>';
+transfersList.innerHTML=transfers.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(t=>'<div class="row"><b>'+new Date(t.date+'T12:00:00').toLocaleDateString('nb-NO')+'</b> · '+esc(accountLabel(t.from))+' → '+esc(accountLabel(t.to))+' · '+kr(t.amount)+'<div class="muted">'+esc(t.desc)+'</div></div>').join('')||'<div class="empty">Ingen overføringer ennå.</div>';
+let sums={};items.filter(x=>x.type==='expense').forEach(x=>sums[x.cat]=(sums[x.cat]||0)+moneyNok(x));
+cats.innerHTML=Object.entries(sums).sort((a,b)=>b[1]-a[1]).map(x=>'<div class="row"><div class="rowtop"><b>'+esc(x[0])+'</b><span>'+kr(x[1])+'</span></div></div>').join('')||'<div class="empty">Ingen utgifter registrert.</div>';
+rows.innerHTML=items.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>'<tr><td>'+new Date(x.date+'T12:00:00').toLocaleDateString('nb-NO')+'</td><td>'+esc(x.desc)+'</td><td>'+esc(x.cat)+'</td><td><span class="account">'+esc(accountLabel(x.accountId))+'</span></td><td>'+ (x.type==='income'?'Inntekt':'Utgift')+'</td><td class="'+x.type+'">'+(x.type==='income'?'+':'−')+' '+kr(moneyNok(x))+(x.currency&&x.currency!=='NOK'?' <small class="muted">('+fmtN(x.amount)+' '+esc(x.currency)+')</small>':'')+'</td><td class="actions"><button class="ghost" onclick="openTx(\''+x.id+'\')">✏️ Rediger</button><button class="danger" onclick="removeTx(\''+x.id+'\')">Slett</button></td></tr>').join('')||'<tr><td colspan="7" class="empty">Ingen transaksjoner denne måneden.</td></tr>';
+let spent={};items.filter(x=>x.type==='expense').forEach(x=>spent[x.cat]=(spent[x.cat]||0)+moneyNok(x));
+budgets.innerHTML=bud.map((b,i)=>{let s=spent[b.cat]||0,p=b.amount?Math.round(s/b.amount*100):0;return '<div class="row"><div class="rowtop"><b>'+esc(b.cat)+'</b><span>'+kr(s)+' / '+kr(b.amount)+'</span></div><div class="progress"><div class="bar '+(p>100?'over':'')+'" style="width:'+Math.min(p,100)+'%"></div></div><small>'+p+'% brukt <button class="danger" style="float:right;padding:5px 8px" onclick="delBud('+i+')">Slett</button></small></div>'}).join('')||'<div class="empty">Ingen budsjetter ennå.</div>';
+document.getElementById('goals').innerHTML=goals.map((g,i)=>{let p=Math.min(100,Math.round(g.current/g.target*100));return '<div class="row"><div class="rowtop"><b>🎯 '+esc(g.name)+'</b><span>'+kr(g.current)+' / '+kr(g.target)+'</span></div><div class="progress"><div class="bar" style="width:'+p+'%"></div></div><small>'+p+'% spart <button class="secondary" style="float:right;padding:5px 8px" onclick="addGoal('+i+')">+ Sparing</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="delGoal('+i+')">Slett</button></small></div>'}).join('')||'<div class="empty">Ingen sparemål ennå.</div>';
+}
+render();
+['searchTx','filterAccount','filterCategory','filterType'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+window.addEventListener('resize',()=>{if(!document.getElementById('analytics').classList.contains('hide'))renderAnalytics()});
+</script>
+<script>
+if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}
+let deferredInstallPrompt=null;
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  const btn=document.getElementById("installAppBtn");
+  const status=document.getElementById("installAppStatus");
+  if(btn){btn.style.display="inline-block"; btn.textContent="📲 Installer Min Økonomi";}
+  if(status){status.textContent="Appen kan installeres direkte fra denne nettleseren.";}
+});
+window.addEventListener("appinstalled",()=>{
+  deferredInstallPrompt=null;
+  const btn=document.getElementById("installAppBtn");
+  const status=document.getElementById("installAppStatus");
+  if(btn) btn.style.display="none";
+  if(status) status.textContent="🟢 Min Økonomi er installert som app.";
+});
+const installBtn=document.getElementById("installAppBtn");
+if(installBtn){installBtn.addEventListener("click",async()=>{
+  if(!deferredInstallPrompt){
+    const status=document.getElementById("installAppStatus");
+    if(status) status.textContent="Bruk nettleserens «Installer app» / «Legg til på startskjermen».";
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+  installBtn.style.display="none";
+});}
+
+try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);window.__curTimer=setTimeout(updateCurrencyUI,250)});el('date').addEventListener('change',updateCurrencyUI)}catch(e){}
+</script>
+</body>
+</html>
