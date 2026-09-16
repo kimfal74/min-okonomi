@@ -167,8 +167,8 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 .auth-card{width:min(440px,100%);background:#fff;border:1px solid #e4e7ed;border-radius:20px;padding:28px;box-shadow:0 12px 35px rgba(0,0,0,.08)}
 .auth-logo{font-size:28px;font-weight:800;text-align:center;margin-bottom:8px}.auth-logo span{color:#315efb}
 .auth-card h1{text-align:center;margin:8px 0}.auth-card .muted{text-align:center}.auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.auth-actions button{flex:1;min-width:150px}
-.auth-note{margin-top:16px;padding:12px;border-radius:10px;background:#f1f3f7;font-size:.9rem}
-.auth-status{margin-top:14px}.header-user{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sync-badge{font-size:.85rem;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#2448c9}
+.auth-note{margin-top:16px;padding:12px;border-radius:10px;background:#f1f3f7;font-size:.9rem}.remember-login{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.95rem}.remember-login input{width:auto;margin:0}
+.auth-status{margin-top:14px}.link-button{border:0;background:none;color:#315efb;font-weight:700;cursor:pointer;padding:10px 2px;margin-top:4px}.link-button:hover{text-decoration:underline}.auth-card form{margin:0}.header-user{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sync-badge{font-size:.85rem;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#2448c9}
 @media(max-width:700px){.auth-card{padding:22px}.auth-actions button{width:100%;flex-basis:100%}.logo{font-size:20px}}
 </style>
 </head>
@@ -176,20 +176,58 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">Min <span>Økonomi</span></div>
-    <h1>Velkommen 👋</h1>
-    <p class="muted">Logg inn for å bruke Min Økonomi.</p>
-    <label>E-post
-      <input id="loginEmail" type="email" autocomplete="email" placeholder="deg@example.com">
-    </label>
-    <label>Passord
-      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
-    </label>
-    <div class="auth-actions">
-      <button class="primary" id="loginBtn" type="button">🔐 Logg inn</button>
-      <button class="secondary" id="signupBtn" type="button">🆕 Opprett konto</button>
+    <div id="loginPanel">
+      <h1>Velkommen 👋</h1>
+      <p class="muted">Logg inn for å bruke Min Økonomi.</p>
+      <form id="loginForm" autocomplete="on">
+        <label>E-post
+          <input id="loginEmail" name="email" type="email" autocomplete="username" inputmode="email" placeholder="deg@example.com">
+        </label>
+        <label>Passord
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+        </label>
+        <label class="remember-login"><input id="rememberMe" type="checkbox" checked> Husk meg på denne enheten</label>
+        <div class="auth-actions">
+          <button class="primary" id="loginBtn" type="submit">🔐 Logg inn</button>
+          <button class="secondary" id="signupBtn" type="button">🆕 Opprett konto</button>
+        </div>
+      </form>
+      <button class="link-button" id="forgotPasswordBtn" type="button">Glemt passord?</button>
+      <div id="loginStatus" class="auth-status"></div>
+      <div class="auth-note">☁️ Kontoen brukes for sikker synkronisering mellom PC og mobil. Økonomidataene dine er fortsatt tilgjengelige lokalt først.</div>
     </div>
-    <div id="loginStatus" class="auth-status"></div>
-    <div class="auth-note">☁️ Kontoen brukes for sikker synkronisering mellom PC og mobil. Økonomidataene dine er fortsatt tilgjengelige lokalt først.</div>
+
+    <div id="forgotPanel" class="hide">
+      <h1>Glemt passord 🔑</h1>
+      <p class="muted">Skriv inn e-postadressen din. Du får en e-post fra Nhost med en sikker lenke for å sette et nytt passord.</p>
+      <form id="forgotForm" autocomplete="on">
+        <label>E-post
+          <input id="forgotEmail" name="email" type="email" autocomplete="username" inputmode="email" placeholder="deg@example.com">
+        </label>
+        <div class="auth-actions">
+          <button class="primary" id="sendResetBtn" type="submit">📧 Send lenke</button>
+          <button class="secondary" id="backToLoginBtn" type="button">Tilbake til innlogging</button>
+        </div>
+      </form>
+      <div id="forgotStatus" class="auth-status"></div>
+    </div>
+
+    <div id="resetPanel" class="hide">
+      <h1>Sett nytt passord 🔐</h1>
+      <p class="muted">Velg et nytt passord for kontoen din.</p>
+      <form id="resetForm" autocomplete="off">
+        <label>Nytt passord
+          <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="3" maxlength="50" placeholder="Nytt passord">
+        </label>
+        <label>Gjenta nytt passord
+          <input id="newPasswordConfirm" name="newPasswordConfirm" type="password" autocomplete="new-password" minlength="3" maxlength="50" placeholder="Gjenta passordet">
+        </label>
+        <div class="auth-actions">
+          <button class="primary" id="resetPasswordBtn" type="submit">🔐 Sett nytt passord</button>
+        </div>
+      </form>
+      <div id="resetStatus" class="auth-status"></div>
+    </div>
   </div>
 </div>
 
@@ -614,7 +652,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 </section>
 
 
-<div id="settings" class="hide"><h1>⚙️ Innstillinger</h1><p class="muted">Sikkerhetskopi, synkronisering og appinnstillinger.</p>
+<div id="settings" class="hide"><h1>⚙️ Innstillinger</h1><p class="muted">Sikkerhetskopi, synkronisering og appinnstillinger.</p><div class="card"><h2>🔐 Passord</h2><p class="muted">Vil du endre passordet? Send deg selv en sikker lenke på e-post.</p><button class="secondary" id="settingsResetPassword" type="button">📧 Send lenke for nytt passord</button><div id="settingsPasswordStatus" class="auth-status"></div></div>
 <div class="card"><h2>☁️ Synkronisering</h2><p class="muted">Økonomidataene dine lagres lokalt først og kan synkroniseres med kontoen din.</p><div class="actions2"><button onclick="document.getElementById('cloudBackup').click()">☁️ Synkroniser nå</button><button class="secondary" onclick="document.getElementById('cloudRestore').click()">📥 Hent fra skyen</button></div><label style="display:flex;align-items:center;gap:10px;margin-top:15px"><input id="settingsAutoSync" type="checkbox" style="width:auto"> 🔄 Automatisk synkronisering</label><div id="settingsSyncStatus" class="muted" style="margin-top:8px"></div></div>
 <div class="card"><h2>💾 Sikkerhetskopi</h2><p class="muted">Eksporter en lokal sikkerhetskopi eller importer en du allerede har laget.</p><div class="actions2"><button class="secondary" onclick="exportData()">📤 Eksporter sikkerhetskopi</button><button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importer sikkerhetskopi</button></div><p class="muted" style="margin-bottom:0">CSV-import er også tilgjengelig for banktransaksjoner.</p></div>
 <div class="card"><h2>📱 App</h2><p class="muted">På HTTPS kan Min Økonomi installeres som app på mobil og PC.</p></div></div>
@@ -775,6 +813,20 @@ function moneyNok(x){return Number(x?.actualNok||x?.nokAmount||x?.amount||0)}
 function currencySymbol(c){return ({NOK:'kr',EUR:'€',USD:'$',GBP:'£',SEK:'kr',DKK:'kr',CHF:'CHF'})[c]||c}
 function parseMoneyValue(v){let s=String(v??'').trim().replace(/\u00a0/g,' ').replace(/\s+/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(s.includes(','))s=s.replace(',','.');let n=Number(s);return Number.isFinite(n)?n:0}
 function rateKey(currency,date){return 'mo_currency_rate_'+currency+'_'+date}
+function parseCsvLine(line){
+  const out=[]; let cur='', quoted=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(quoted && line[i+1]==='"'){cur+='"'; i++; continue;}
+      quoted=!quoted; continue;
+    }
+    if(ch===';' && !quoted){out.push(cur.trim()); cur=''; continue;}
+    cur+=ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
 async function fetchNokRate(currency,date){
   if(currency==='NOK') return 1;
   const cached=localStorage.getItem(rateKey(currency,date)); if(cached&&Number(cached)>0)return Number(cached);
@@ -783,9 +835,27 @@ async function fetchNokRate(currency,date){
     const d=new Date(end); d.setDate(d.getDate()-back); const ds=d.toISOString().slice(0,10);
     try{
       const url='https://data.norges-bank.no/api/data/EXR/B.'+currency+'.NOK.SP?format=csv&startPeriod='+ds+'&endPeriod='+ds+'&locale=no';
-      const r=await fetch(url); if(!r.ok)continue; const text=await r.text();
-      const lines=text.trim().split(/\r?\n/).filter(Boolean);
-      for(let i=lines.length-1;i>=0;i--){const parts=lines[i].split(';').map(x=>x.replace(/^"|"$/g,'').trim()); const nums=parts.map(x=>x.replace(',','.')).map(Number).filter(n=>Number.isFinite(n)&&n>0); if(nums.length){const rate=nums[nums.length-1]; if(rate>0){localStorage.setItem(rateKey(currency,date),String(rate)); return rate;}}}
+      const r=await fetch(url,{cache:'no-store'}); if(!r.ok)continue;
+      const text=(await r.text()).replace(/^\uFEFF/,'').trim();
+      const lines=text.split(/\r?\n/).filter(Boolean);
+      if(lines.length<2)continue;
+      const headers=parseCsvLine(lines[0]).map(x=>x.replace(/^"|"$/g,'').trim().toUpperCase());
+      const obsIdx=headers.indexOf('OBS_VALUE');
+      const multIdx=headers.indexOf('UNIT_MULT');
+      if(obsIdx<0)continue;
+      for(let i=lines.length-1;i>=1;i--){
+        const parts=parseCsvLine(lines[i]);
+        const raw=String(parts[obsIdx]??'').replace(',','.').trim();
+        const obs=Number(raw);
+        if(!Number.isFinite(obs))continue;
+        const multRaw=multIdx>=0?String(parts[multIdx]??'').replace(',','.').trim():'0';
+        const mult=Number(multRaw);
+        const rate=obs*Math.pow(10,Number.isFinite(mult)?mult:0);
+        if(rate>0 && Number.isFinite(rate)){
+          localStorage.setItem(rateKey(currency,date),String(rate));
+          return rate;
+        }
+      }
     }catch(e){}
   }
   throw new Error('Fant ingen valutakurs fra Norges Bank for denne datoen. Du kan prøve igjen eller bruke NOK.');
@@ -1612,8 +1682,24 @@ function nhostUrls(cfg){
   };
 }
 
-function saveSession(session){ localStorage.setItem('mo6_nhost_session',JSON.stringify(session)); }
-function getSession(){ try{return JSON.parse(localStorage.getItem('mo6_nhost_session')||'null')}catch(e){return null} }
+function saveSession(session){
+  const value=JSON.stringify(session);
+  if(document.getElementById('rememberMe')?.checked!==false){
+    localStorage.setItem('mo6_nhost_session',value);
+    sessionStorage.removeItem('mo6_nhost_session');
+  }else{
+    sessionStorage.setItem('mo6_nhost_session',value);
+    localStorage.removeItem('mo6_nhost_session');
+  }
+}
+function getSession(){
+  try{return JSON.parse(localStorage.getItem('mo6_nhost_session')||sessionStorage.getItem('mo6_nhost_session')||'null')}
+  catch(e){return null}
+}
+function clearSession(){
+  localStorage.removeItem('mo6_nhost_session');
+  sessionStorage.removeItem('mo6_nhost_session');
+}
 async function refreshNhostSession(){
   const cfg=loadNhostConfig(); const sess=getSession();
   if(!cfg.subdomain||!sess?.refreshToken) return null;
@@ -1820,6 +1906,17 @@ function renderAuthStatus(text, good=false){
 }
 document.getElementById('saveNhostConfig').addEventListener('click',saveNhostConfig);
 
+function loadRememberedLogin(){
+  const email=localStorage.getItem('mo6_login_email')||'';
+  const emailEl=document.getElementById('loginEmail');
+  if(emailEl && email) emailEl.value=email;
+}
+function rememberLoginEmail(){
+  const email=document.getElementById('loginEmail').value.trim();
+  if(email) localStorage.setItem('mo6_login_email',email);
+}
+
+
 document.getElementById('testNhost').addEventListener('click',async()=>{
   try{
     const cfg=loadNhostConfig();
@@ -1853,17 +1950,19 @@ async function leaveApp(){
   if(cfg.subdomain&&session?.refreshToken){
     try{await fetch(nhostUrls(cfg).auth+'/signout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.accessToken},body:JSON.stringify({refreshToken:session.refreshToken})});}catch(e){}
   }
-  localStorage.removeItem('mo6_nhost_session');
+  clearSession();
   document.getElementById('appShell').classList.add('hide');
   document.getElementById('authScreen').classList.remove('hide');
   document.getElementById('loginPassword').value='';
   document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⚪ Du er logget ut.</div>';
 }
-document.getElementById('loginBtn').addEventListener('click',async()=>{
+document.getElementById('loginForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
   try{
     const email=document.getElementById('loginEmail').value.trim();
     const password=document.getElementById('loginPassword').value;
     if(!email||!password) throw new Error('Skriv inn e-post og passord.');
+    rememberLoginEmail();
     document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⏳ Logger inn…</div>';
     const data=await nhostRequest('/signin/email-password',{email,password});
     if(data?.session){
@@ -1878,6 +1977,7 @@ document.getElementById('signupBtn').addEventListener('click',async()=>{
     const email=document.getElementById('loginEmail').value.trim();
     const password=document.getElementById('loginPassword').value;
     if(!email||!password) throw new Error('Skriv inn e-post og passord.');
+    rememberLoginEmail();
     document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⏳ Oppretter konto…</div>';
     const data=await nhostRequest('/signup/email-password',{email,password,options:{allowedRoles:['me','user'],defaultRole:'user'}});
     if(data?.session){
@@ -1890,15 +1990,103 @@ document.getElementById('signupBtn').addEventListener('click',async()=>{
   }catch(e){document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}
 });
 document.getElementById('logoutBtn').addEventListener('click',leaveApp);
-document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click();});
 
+function authAppRedirectUrl(){
+  return window.location.origin + window.location.pathname;
+}
+function showAuthPanel(which){
+  document.getElementById('loginPanel').classList.toggle('hide',which!=='login');
+  document.getElementById('forgotPanel').classList.toggle('hide',which!=='forgot');
+  document.getElementById('resetPanel').classList.toggle('hide',which!=='reset');
+}
+function clearAuthQuery(){
+  try{window.history.replaceState({},document.title,window.location.pathname+window.location.hash)}catch(e){}
+}
+async function requestPasswordReset(email, statusEl){
+  const cfg=loadNhostConfig();
+  if(!cfg.subdomain) throw new Error('Nhost er ikke konfigurert.');
+  if(!email) throw new Error('Skriv inn e-postadressen din.');
+  statusEl.innerHTML='<div class="sync-neutral">⏳ Sender lenke…</div>';
+  const data=await nhostRequest('/user/password/reset',{email,options:{redirectTo:authAppRedirectUrl()}});
+  if(data==='OK' || data?.status==='OK' || data) statusEl.innerHTML='<div class="sync-good">🟢 Hvis kontoen finnes, er lenken sendt på e-post. Sjekk innboksen din. 📧</div>';
+}
+let resetSession=null;
+async function preparePasswordResetFromUrl(){
+  const params=new URLSearchParams(window.location.search);
+  const type=params.get('type');
+  const refreshToken=params.get('refreshToken');
+  if(type!=='passwordReset' || !refreshToken) return false;
+  clearAuthQuery();
+  try{
+    const cfg=loadNhostConfig();
+    const r=await fetch(nhostUrls(cfg).auth+'/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refreshToken})});
+    let body={}; try{body=await r.json()}catch(e){}
+    if(!r.ok) throw new Error(body?.error?.message||body?.message||('HTTP '+r.status));
+    resetSession=body?.session||body;
+    if(!resetSession?.accessToken) throw new Error('Kunne ikke klargjøre passordbytte.');
+    document.getElementById('resetPanel').dataset.resetEmail=resetSession?.user?.email||'';
+    showAuthPanel('reset');
+    document.getElementById('resetStatus').innerHTML='<div class="sync-good">🟢 Lenken er godkjent. Velg et nytt passord.</div>';
+    return true;
+  }catch(e){
+    resetSession=null; showAuthPanel('login');
+    renderAuthStatus('⚠️ Passordlenken er utløpt eller ugyldig. Be om en ny lenke.');
+    return false;
+  }
+}
+
+document.getElementById('forgotPasswordBtn').addEventListener('click',()=>{
+  const email=document.getElementById('loginEmail').value.trim();
+  document.getElementById('forgotEmail').value=email;
+  document.getElementById('forgotStatus').innerHTML='';
+  showAuthPanel('forgot');
+});
+document.getElementById('backToLoginBtn').addEventListener('click',()=>{showAuthPanel('login');});
+document.getElementById('forgotForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  try{await requestPasswordReset(document.getElementById('forgotEmail').value.trim(),document.getElementById('forgotStatus'));}
+  catch(err){document.getElementById('forgotStatus').innerHTML='<div class="sync-neutral">⚠️ '+esc(err.message)+'</div>';}
+});
+document.getElementById('resetForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  try{
+    const p=document.getElementById('newPassword').value;
+    const p2=document.getElementById('newPasswordConfirm').value;
+    if(p.length<3) throw new Error('Passordet må ha minst 3 tegn.');
+    if(p!==p2) throw new Error('Passordene er ikke like.');
+    if(!resetSession?.accessToken) throw new Error('Passordlenken er ikke aktiv.');
+    document.getElementById('resetStatus').innerHTML='<div class="sync-neutral">⏳ Setter nytt passord…</div>';
+    const cfg=loadNhostConfig();
+    const r=await fetch(nhostUrls(cfg).auth+'/user/password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+resetSession.accessToken},body:JSON.stringify({newPassword:p})});
+    let body={}; try{body=await r.json()}catch(e){}
+    if(!r.ok) throw new Error(body?.error?.message||body?.message||('HTTP '+r.status));
+    const email=resetSession?.user?.email||'';
+    resetSession=null;
+    document.getElementById('newPassword').value=''; document.getElementById('newPasswordConfirm').value='';
+    document.getElementById('loginEmail').value=email;
+    document.getElementById('loginPassword').value='';
+    showAuthPanel('login');
+    renderAuthStatus('🟢 Passordet er endret. Du kan nå logge inn med det nye passordet. 🎉',true);
+  }catch(err){document.getElementById('resetStatus').innerHTML='<div class="sync-neutral">⚠️ '+esc(err.message)+'</div>';}
+});
+document.getElementById('settingsResetPassword').addEventListener('click',async()=>{
+  const status=document.getElementById('settingsPasswordStatus');
+  try{
+    const sess=getSession(); const email=sess?.user?.email||localStorage.getItem('mo6_login_email')||'';
+    await requestPasswordReset(email,status);
+  }catch(err){status.innerHTML='<div class="sync-neutral">⚠️ '+esc(err.message)+'</div>';}
+});
+
+
+loadRememberedLogin();
 async function initAuthGate(){
+  if(await preparePasswordResetFromUrl()) return;
   const sess=getSession();
   if(sess?.accessToken){await enterApp();return;}
   if(sess?.refreshToken){
     const fresh=await refreshNhostSession();
     if(fresh?.accessToken){await enterApp();return;}
-    localStorage.removeItem('mo6_nhost_session');
+    clearSession();
   }
   document.getElementById('authScreen').classList.remove('hide');
   document.getElementById('appShell').classList.add('hide');
@@ -1906,7 +2094,7 @@ async function initAuthGate(){
 
 document.getElementById('prepareSync').addEventListener('click',()=>{
   const cfg=loadNhostConfig();
-  const session=JSON.parse(localStorage.getItem('mo6_nhost_session')||'null');
+  const session=getSession();
   document.getElementById('syncInfo').innerHTML=
     `<div class="sync-neutral">🧩 Klar for neste steg: ${cfg.subdomain?'Nhost er konfigurert':'Nhost mangler oppsett'} · ${session?'brukerøkt finnes lokalt':'ingen innlogget bruker'} · lokale data er urørt.</div>`;
 });
