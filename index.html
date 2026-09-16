@@ -1,18 +1,23 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="no">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Min Økonomi</title>
 <style>
 body{font-family:Arial,sans-serif;background:#f5f7fb;color:#172033;margin:0}
-header{background:#fff;padding:16px 20px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.logo{font-size:22px;font-weight:bold}.logo span{color:#315efb}nav{display:flex;gap:5px}.tab{background:white;color:#687080}.tab.active{background:#eef2ff;color:#2448c9}
+header{background:#fff;padding:12px 20px;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+.logo{font-size:22px;font-weight:bold;white-space:nowrap}.logo span{color:#315efb}
+nav{display:flex;align-items:center;gap:6px;flex:1;min-width:0}.nav-primary{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden}.tab{background:white;color:#687080;white-space:nowrap}.tab.active{background:#eef2ff;color:#2448c9}
+.nav-more{position:relative;flex:0 0 auto}.more-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);background:#fff;border:1px solid #e4e7ed;border-radius:12px;padding:7px;box-shadow:0 12px 30px rgba(23,32,51,.14);min-width:190px;z-index:30}.more-menu.open{display:flex;flex-direction:column;gap:4px}.more-menu .tab{width:100%;text-align:left}
+.header-user{display:flex;align-items:center;gap:7px;flex:0 0 auto}.sync-badge{white-space:nowrap}
+@media(max-width:1100px){header{gap:8px;padding:10px 14px}.logo{font-size:20px}.tab{padding:8px 9px}.header-user .sync-badge{display:none}.nav-primary{overflow-x:auto;scrollbar-width:none}.nav-primary::-webkit-scrollbar{display:none}}
+@media(max-width:900px){header{flex-wrap:wrap}.logo{margin-right:auto}nav{order:3;flex-basis:100%;padding-bottom:2px}.nav-primary{overflow-x:auto}.more-menu{position:fixed;right:14px;top:62px}}
 main{max-width:1150px;margin:25px auto;padding:0 18px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
 .card{background:white;border:1px solid #e4e7ed;border-radius:15px;padding:18px;margin-top:18px}.value{font-size:28px;font-weight:bold;margin-top:7px}
 .income{color:#18864b}.expense{color:#d94b61}.balance{color:#315efb}.muted,small{color:#687080}
 button{border:0;border-radius:9px;padding:9px 13px;font-weight:bold;cursor:pointer;background:#315efb;color:white}
 button.secondary{background:#eef2ff;color:#2448c9}button.danger{background:#fff0f2;color:#b72f45}button.ghost{background:#f1f3f7;color:#46505f}
-.hide{display:none}table{width:100%;border-collapse:collapse}th,td{padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
+.hide{display:none}.dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.quick-card{background:white;border:1px solid #e4e7ed;border-radius:15px;padding:18px}.quick-card h3{margin:0 0 8px}.quick-card p{margin:0 0 12px}.nav-scroll{display:flex;gap:5px;padding-bottom:2px}.nav-scroll .tab{white-space:nowrap}@media(max-width:900px){.dashboard-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.dashboard-grid,.quick-grid{grid-template-columns:1fr}.nav-scroll{max-width:100%}}table{width:100%;border-collapse:collapse}th,td{padding:11px 8px;border-bottom:1px solid #e5e7eb;text-align:left;white-space:nowrap}
 th{font-size:13px;color:#687080}.actions{display:flex;gap:5px}.modal{display:none;position:fixed;inset:0;background:#0006;align-items:center;justify-content:center;padding:20px;z-index:10}
 .modal.open{display:flex}.dialog{background:white;border-radius:16px;padding:22px;width:min(480px,100%);max-height:90vh;overflow:auto}
 label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
@@ -27,6 +32,28 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 .data-model small{display:block;opacity:.7;margin-top:3px}
 
 .currency-box{margin:8px 0 12px;padding:10px 12px;border:1px solid #d7dde5;border-radius:10px;background:#f7f8fa;font-size:.95rem}.currency-box strong{font-size:1.05rem}.dialog select,.dialog input{box-sizing:border-box}
+
+/* Mobile layout: prevent the whole page from becoming wider than the phone. */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+*,*:before,*:after{box-sizing:border-box}
+@media(max-width:700px){
+  main{width:100%;max-width:100%;margin:16px 0;padding:0 12px}
+  header{width:100%;max-width:100%;overflow:hidden}
+  nav{width:100%;max-width:100%;min-width:0}
+  .nav-primary{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .header-user{max-width:100%}
+  .dashboard-grid,.quick-grid,.grid,.bankgrid,.data-model{width:100%;max-width:100%}
+  .card,.quick-card,.bankcard{max-width:100%;min-width:0}
+  .calendar-controls,.break-row,.dash-row,.rowtop{max-width:100%;min-width:0;flex-wrap:wrap}
+  .calendar-grid{width:100%;max-width:100%}
+  .forecast-table{width:100%;max-width:100%;overflow-x:auto}
+  .frow{min-width:0}
+  .chartwrap{max-width:100%}
+  table{display:block;max-width:100%;overflow-x:auto}
+  .actions2{flex-wrap:wrap}
+  .actions2 button{max-width:100%}
+  .dialog{width:calc(100vw - 24px);max-width:480px}
+}
 </style>
 
 <style>
@@ -133,40 +160,95 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 @media(max-width:700px){.sync-flow{gap:7px}.sync-flow .arrow{font-size:1.1rem}.sync-flow>div:not(.arrow){min-width:70px;padding:10px 5px}}
 </style>
 
+
+<style>
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:#f5f7fb}
+.auth-screen.hide{display:none!important}
+.auth-card{width:min(440px,100%);background:#fff;border:1px solid #e4e7ed;border-radius:20px;padding:28px;box-shadow:0 12px 35px rgba(0,0,0,.08)}
+.auth-logo{font-size:28px;font-weight:800;text-align:center;margin-bottom:8px}.auth-logo span{color:#315efb}
+.auth-card h1{text-align:center;margin:8px 0}.auth-card .muted{text-align:center}.auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.auth-actions button{flex:1;min-width:150px}
+.auth-note{margin-top:16px;padding:12px;border-radius:10px;background:#f1f3f7;font-size:.9rem}
+.auth-status{margin-top:14px}.header-user{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sync-badge{font-size:.85rem;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#2448c9}
+@media(max-width:700px){.auth-card{padding:22px}.auth-actions button{width:100%;flex-basis:100%}.logo{font-size:20px}}
+</style>
 </head>
 <body>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Min <span>Økonomi</span></div>
+    <h1>Velkommen 👋</h1>
+    <p class="muted">Logg inn for å bruke Min Økonomi.</p>
+    <label>E-post
+      <input id="loginEmail" type="email" autocomplete="email" placeholder="deg@example.com">
+    </label>
+    <label>Passord
+      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
+    </label>
+    <div class="auth-actions">
+      <button class="primary" id="loginBtn" type="button">🔐 Logg inn</button>
+      <button class="secondary" id="signupBtn" type="button">🆕 Opprett konto</button>
+    </div>
+    <div id="loginStatus" class="auth-status"></div>
+    <div class="auth-note">☁️ Kontoen brukes for sikker synkronisering mellom PC og mobil. Økonomidataene dine er fortsatt tilgjengelige lokalt først.</div>
+  </div>
+</div>
+
+<div id="appShell" class="hide">
 <header>
 <div class="logo">Min <span>Økonomi</span></div>
-<nav>
-<button class="tab active" onclick="show('overview',this)">Oversikt</button>
-<button class="tab" onclick="show('accounts',this)">🏦 Banker & kontoer</button>
-<button class="tab" onclick="show('budget',this)">Budsjett</button>
-<button class="tab" onclick="show('savings',this)">Sparemål</button><button class="tab" onclick="show('bills',this)">📅 Regninger</button><button class="tab" onclick="show('analytics',this)">📊 Analyse</button>
+<nav class="nav-scroll">
+<div class="nav-primary">
+<button class="tab active" onclick="show('overview',this)">🏠 Oversikt</button>
+<button class="tab" onclick="show('transactions',this)">💰 Transaksjoner</button>
+<button class="tab" onclick="show('accounts',this)">🏦 Kontoer</button>
+<button class="tab" onclick="show('budget',this)">📊 Budsjett</button>
+<button class="tab" onclick="show('savings',this)">🎯 Sparemål</button>
+<button class="tab" onclick="show('bills',this)">📅 Regninger</button>
+<button class="tab" onclick="show('analytics',this)">📈 Analyse</button>
+<button class="tab" onclick="show('tab-debt',this)">💳 Gjeld & formue</button>
+</div>
+<div class="nav-more">
+<button id="moreBtn" class="tab" type="button" onclick="toggleMore(event)">⋯ Mer ▾</button>
+<div id="moreMenu" class="more-menu" role="menu">
+<button class="tab" data-more="true" onclick="show('tab-spend',this);closeMore()">🧮 Beregninger</button>
+<button class="tab" data-more="true" onclick="show('tab-scenario',this);closeMore()">🔮 Scenario</button>
+<button class="tab" data-more="true" onclick="show('tab-calendar',this);closeMore()">🗓️ Kalender</button>
+<button class="tab" data-more="true" onclick="show('tab-forecast',this);closeMore()">📈 Prognose</button>
+<button class="tab" data-more="true" onclick="show('tab-assistant',this);closeMore()">🧠 Assistent</button>
+<button class="tab" data-more="true" onclick="show('settings',this);closeMore()">⚙️ Innstillinger</button>
+</div>
+</div>
 </nav>
+<div class="header-user">
+<span id="syncBadge" class="sync-badge">☁️ Innlogget</span>
+<button class="secondary" id="logoutBtn" type="button">🚪 Logg ut</button>
 <button onclick="openTx()">+ Legg til</button>
+</div>
 </header>
 
 <main>
 <div id="overview">
 <h1>Oversikt</h1><p class="muted" id="month"></p>
-<div class="grid">
+<div class="dashboard-grid">
 <div class="card"><div class="muted">Inntekter denne måneden</div><div class="value income" id="income">0 kr</div></div>
 <div class="card"><div class="muted">Utgifter denne måneden</div><div class="value expense" id="expense">0 kr</div></div>
 <div class="card"><div class="muted">Netto denne måneden</div><div class="value balance" id="balance">0 kr</div></div>
 <div class="card"><div class="muted">Saldo på kontoer</div><div class="value" id="overviewAccountBalance">0 kr</div></div>
 </div>
-<div class="card"><h2>Saldo per konto</h2><div id="accountSummary"></div></div>
-<div class="card"><h2>Forbruk per kategori</h2><div id="cats"></div></div>
-<div class="card">
-<div style="display:flex;justify-content:space-between;align-items:center"><h2>Transaksjoner</h2><button class="secondary" onclick="clearAll()">Tøm data</button></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-<input id="searchTx" placeholder="🔎 Søk i transaksjoner..." style="max-width:260px">
-<select id="filterAccount" style="max-width:220px"><option value="">Alle kontoer</option></select>
-<select id="filterCategory" style="max-width:180px"><option value="">Alle kategorier</option></select>
-<select id="filterType" style="max-width:150px"><option value="">Alle typer</option><option value="income">Inntekt</option><option value="expense">Utgift</option></select>
+<div class="quick-grid" style="margin-top:15px">
+<div class="quick-card"><h3>🏦 Kontoer</h3><p class="muted">Samlet saldo og bankkontoer.</p><div id="accountSummary"></div><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">Se kontoer</button></div>
+<div class="quick-card"><h3>💸 Forbruk</h3><p class="muted">Se hvor pengene går.</p><div id="cats"></div><button class="secondary" onclick="show('analytics',document.querySelectorAll('.tab')[6])">Se analyse</button></div>
+<div class="quick-card"><h3>📅 Regninger</h3><p class="muted">Hold oversikt over kommende betalinger.</p><div class="muted">Se neste forfall under Regninger.</div><button class="secondary" onclick="show('bills',document.querySelectorAll('.tab')[5])">Se regninger</button></div>
+<div class="quick-card"><h3>🎯 Sparemål</h3><p class="muted">Følg fremdriften mot målene dine.</p><div class="muted">Se status og fremdrift under Sparemål.</div><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">Se sparemål</button></div>
 </div>
-<div style="overflow:auto"><table><thead><tr><th>Dato</th><th>Beskrivelse</th><th>Kategori</th><th>Bank/konto</th><th>Type</th><th>Beløp</th><th>Handling</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="card" style="margin-top:15px"><h2>✨ Hurtigstart</h2><p class="muted">Legg raskt til det du trenger.</p><div class="actions2"><button onclick="openTx()">+ Legg til transaksjon</button><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">🏦 Konto</button><button class="secondary" onclick="show('budget',document.querySelectorAll('.tab')[3])">📊 Budsjett</button><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">🎯 Sparemål</button></div></div>
 </div>
+
+<div id="transactions" class="hide">
+<h1>💰 Transaksjoner</h1><p class="muted">Registrer, søk og filtrer inntekter og utgifter.</p>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Alle transaksjoner</h2><button onclick="openTx()">+ Ny transaksjon</button></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><input id="searchTx" placeholder="🔎 Søk i transaksjoner..." style="max-width:260px"><select id="filterAccount" style="max-width:220px"><option value="">Alle kontoer</option></select><select id="filterCategory" style="max-width:180px"><option value="">Alle kategorier</option></select><select id="filterType" style="max-width:150px"><option value="">Alle typer</option><option value="income">Inntekt</option><option value="expense">Utgift</option></select></div>
+<div style="overflow:auto"><table><thead><tr><th>Dato</th><th>Beskrivelse</th><th>Kategori</th><th>Bank/konto</th><th>Type</th><th>Beløp</th><th>Handling</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 </div>
 
 <div id="accounts" class="hide">
@@ -176,13 +258,6 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </div>
 
 
-
-<div class="card"><h2>📦 Sikkerhetskopi</h2>
-<p class="muted">Eksporter en sikkerhetskopi av appdataene dine som JSON. Du kan importere den igjen senere.</p>
-<button class="secondary" onclick="exportData()">📤 Eksporter sikkerhetskopi</button>
-<button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importer sikkerhetskopi</button>
-<p class="muted" style="margin-bottom:0">CSV-import er også tilgjengelig for banktransaksjoner.</p>
-</div>
 
 <div id="analytics" class="hide">
 <h1>📊 Analyse</h1><p class="muted">Se hvor pengene går og sammenlign måneder.</p>
@@ -210,7 +285,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </div>
 <div class="card"><h2>💰 Kommende betalinger</h2><div id="upcoming"></div></div>
 </div>
-<section id="tab-debt" class="tab-panel">
+<section id="tab-debt" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>💳 Gjeld & formue</h2>
@@ -272,7 +347,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-spend" class="tab-panel">
+<section id="tab-spend" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>💰 Hvor mye kan jeg bruke?</h2>
@@ -310,7 +385,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-scenario" class="tab-panel">
+<section id="tab-scenario" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>🔮 Hva skjer hvis…?</h2>
@@ -365,7 +440,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-calendar" class="tab-panel">
+<section id="tab-calendar" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>📅 Økonomisk kalender</h2>
@@ -395,7 +470,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-forecast" class="tab-panel">
+<section id="tab-forecast" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>🔮 12 måneders økonomisk prognose</h2>
@@ -429,7 +504,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-assistant" class="tab-panel">
+<section id="tab-assistant" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>🧠 Min økonomiske assistent</h2>
@@ -462,7 +537,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-dashboard" class="tab-panel">
+<section id="tab-dashboard" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>🏠 Min økonomi</h2>
@@ -501,7 +576,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-mobile" class="tab-panel">
+<section id="tab-mobile" class="tab-panel hide">
   <div class="section-head">
     <div>
       <h2>📱 Min Økonomi på mobilen</h2>
@@ -539,105 +614,30 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 </section>
 
 
-<section id="tab-sync" class="tab-panel">
-  <div class="card">
-    <h2>☁️ Nhost-synk</h2>
-    <p class="muted">Min Økonomi er fortsatt <strong>local-first</strong>. Nhost blir neste lag for konto, skydata og synk mellom PC og mobil.</p>
-    <div id="syncStatus" class="sync-status"></div>
+<div id="settings" class="hide"><h1>⚙️ Innstillinger</h1><p class="muted">Sikkerhetskopi, synkronisering og appinnstillinger.</p>
+<div class="card"><h2>☁️ Synkronisering</h2><p class="muted">Økonomidataene dine lagres lokalt først og kan synkroniseres med kontoen din.</p><div class="actions2"><button onclick="document.getElementById('cloudBackup').click()">☁️ Synkroniser nå</button><button class="secondary" onclick="document.getElementById('cloudRestore').click()">📥 Hent fra skyen</button></div><label style="display:flex;align-items:center;gap:10px;margin-top:15px"><input id="settingsAutoSync" type="checkbox" style="width:auto"> 🔄 Automatisk synkronisering</label><div id="settingsSyncStatus" class="muted" style="margin-top:8px"></div></div>
+<div class="card"><h2>💾 Sikkerhetskopi</h2><p class="muted">Eksporter en lokal sikkerhetskopi eller importer en du allerede har laget.</p><div class="actions2"><button class="secondary" onclick="exportData()">📤 Eksporter sikkerhetskopi</button><button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importer sikkerhetskopi</button></div><p class="muted" style="margin-bottom:0">CSV-import er også tilgjengelig for banktransaksjoner.</p></div>
+<div class="card"><h2>📱 App</h2><p class="muted">På HTTPS kan Min Økonomi installeres som app på mobil og PC.</p></div></div>
 
-    <h3>🇪🇺 Nhost-prosjekt</h3>
-    <label>Nhost subdomain
-      <input id="nhostSubdomain" placeholder="f.eks. abcdefgh">
-    </label>
-    <label>Region
-      <select id="nhostRegion">
-        <option value="eu-central-1">Europe (Frankfurt)</option>
-        <option value="eu-west-1">Europe (London)</option>
-      </select>
-    </label>
-    <button class="primary" id="saveNhostConfig" style="margin-top:12px">☁️ Lagre Nhost-oppsett</button>
-    <button class="secondary" id="testNhost" style="margin-top:8px">🔎 Test Nhost</button>
-
-    <div class="notice" style="margin-top:14px">
-      <strong>🔐 Viktig:</strong> Vi legger ikke inn noen service-/admin-nøkkel i appen. Klientappen skal bruke Nhosts offentlige klientoppsett og innlogging.
-    </div>
-
-    <h3 style="margin-top:22px">👤 Konto</h3>
-    <label>E-post
-      <input id="nhostEmail" type="email" autocomplete="email" placeholder="deg@example.com">
-    </label>
-    <label>Passord
-      <input id="nhostPassword" type="password" autocomplete="current-password" placeholder="••••••••">
-    </label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <button class="primary" id="nhostSignUp">🆕 Opprett konto</button>
-      <button class="secondary" id="nhostSignIn">🔐 Logg inn</button>
-      <button class="secondary" id="nhostSignOut">🚪 Logg ut</button>
-    </div>
-    <div id="nhostAuthStatus" class="sync-status" style="margin-top:12px"></div>
-
-    <h3 style="margin-top:22px">🔄 Synkronisering</h3>
-    <p class="muted">v38 bygger videre på Nhost-integrasjonen med automatisk synk og konfliktbeskyttelse. Lokal data er fortsatt først.</p>
-    <button class="secondary" id="prepareSync">🧩 Klargjør synkstatus</button>
-    <button class="primary" id="cloudBackup" style="margin-top:8px">☁️ Sikkerhetssynk til Nhost</button>
-    <button class="secondary" id="cloudRestore" style="margin-top:8px">⬇️ Hent sikkerhetskopi fra Nhost</button>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="autoSync" type="checkbox" style="width:auto"> 🔄 Automatisk synkronisering (med konfliktbeskyttelse)</label>
-    <div id="autoSyncStatus" class="sync-status"></div>
-    <div id="syncInfo" class="sync-status"></div>
-    <div class="notice" style="margin-top:12px"><strong>🛡️ Første skyfase:</strong> v38 bruker én krypteringsfri, bruker-eid JSON-snapshot-rad i Nhost som trygg bro for alle appdata. Lokal data er fortsatt fasit til du selv velger å hente fra skyen. Dette er ikke en erstatning for senere finmasket tabellsynk.</div>
-  </div>
-
-  <div class="card">
-    <h3>🧩 Backend-lag</h3>
-    <p class="muted">Appen bruker et eget sync-lag slik at økonomifunksjonene ikke låses til én leverandør. Nhost er valgt som første backend.</p>
-    <div class="sync-flow">
-      <div>💾<br><strong>Lokal data</strong><br><small>offline først</small></div>
-      <div class="arrow">↔</div>
-      <div>🧩<br><strong>Sync-lag</strong><br><small>leverandøruavhengig</small></div>
-      <div class="arrow">↔</div>
-      <div>☁️<br><strong>Nhost</strong><br><small>PostgreSQL + Auth</small></div>
-    </div>
-    <div class="notice">
-      <strong>🔐 Datasikkerhet:</strong> v17 flytter fortsatt ikke økonomidata automatisk til skyen.
-      Vi setter opp database, permissions og migrering først. Det gjør at eksisterende lokale data kan beholdes som fasit mens sky-synken testes.
-    </div>
-    <button class="secondary" id="makeSyncPlan" style="margin-top:10px">🗺️ Vis synk-plan</button>
-    <div id="syncPlan" class="sync-status"></div>
-  </div>
-
-  <div class="card">
-    <h3>🗄️ v18 – Datamodell</h3>
-    <p class="muted">Første steg mot ekte synk: vi definerer hvilke data som skal til PostgreSQL. Ingen økonomidata sendes til skyen før du selv aktiverer synk.</p>
-    <div class="data-model">
-      <div><strong>👤 user</strong><small>konto / eier</small></div>
-      <div><strong>💰 transactions</strong><small>inntekter og utgifter</small></div>
-      <div><strong>🏦 accounts</strong><small>bankkontoer</small></div>
-      <div><strong>📅 recurring_bills</strong><small>faste regninger</small></div>
-      <div><strong>🎯 savings_goals</strong><small>sparemål</small></div>
-      <div><strong>💳 credit_cards</strong><small>kredittkort</small></div>
-      <div><strong>🏦 loans</strong><small>lån</small></div>
-      <div><strong>🏠 assets</strong><small>andre eiendeler</small></div>
-      <div><strong>📊 budgets</strong><small>budsjetter</small></div>
-      <div><strong>🏷️ categories</strong><small>egne kategorier</small></div>
-    </div>
-    <button class="secondary" id="showSchema" style="margin-top:12px">🔍 Vis foreslått PostgreSQL-skjema</button>
-    <pre id="schemaPreview" style="display:none;white-space:pre-wrap;overflow:auto;margin-top:12px;padding:12px;border-radius:10px;background:#f4f4f4"></pre>
-  </div>
-
-  <div class="card">
-    <h3>🏗️ Arkitekturen</h3>
-    <div class="sync-flow">
-      <div>💻<br><strong>PC</strong><br><small>local-first</small></div>
-      <div class="arrow">↔</div>
-      <div>☁️<br><strong>Nhost</strong><br><small>database + auth</small></div>
-      <div class="arrow">↔</div>
-      <div>📱<br><strong>Mobil</strong><br><small>PWA</small></div>
-    </div>
-    <p class="muted">pCloud kommer senere som separat backup-lag. Det holder databasen og backupen adskilt.</p>
-  </div>
+<section id="tab-sync" class="tab-panel" style="display:none!important">
+  <div id="syncStatus"></div>
+  <input id="nhostSubdomain" type="hidden">
+  <select id="nhostRegion"><option value="eu-central-1">Europe (Frankfurt)</option></select>
+  <button id="saveNhostConfig" type="button"></button>
+  <button id="testNhost" type="button"></button>
+  <input id="nhostEmail" type="hidden">
+  <input id="nhostPassword" type="hidden">
+  <button id="nhostSignUp" type="button"></button><button id="nhostSignIn" type="button"></button><button id="nhostSignOut" type="button"></button>
+  <div id="nhostAuthStatus"></div>
+  <button id="prepareSync" type="button"></button>
+  <button id="cloudBackup" type="button"></button>
+  <button id="cloudRestore" type="button"></button>
+  <input id="autoSync" type="checkbox">
+  <div id="autoSyncStatus"></div><div id="syncInfo"></div>
 </section>
 
 </main>
+</div>
 
 
 <div class="modal" id="billModal"><div class="dialog"><h2 id="billTitle">Ny fast regning</h2>
@@ -646,7 +646,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 <label>Beløp</label><input id="billAmount" inputmode="decimal" min="0" step=".01" required placeholder="F.eks. 29,99">
 <label>Valuta</label><select id="billCurrency" onchange="updateBillCurrencyUI()"><option value="NOK">🇳🇴 NOK – Norske kroner</option><option value="EUR">🇪🇺 EUR – Euro</option><option value="USD">🇺🇸 USD – Amerikanske dollar</option><option value="GBP">🇬🇧 GBP – Britiske pund</option><option value="SEK">🇸🇪 SEK – Svenske kroner</option><option value="DKK">🇩🇰 DKK – Danske kroner</option><option value="CHF">🇨🇭 CHF – Sveitsiske franc</option></select>
 <div id="billCurrencyInfo" class="currency-box">Velg valuta for å se omregningen.</div>
-<label>Kategori</label><select id="billCat"></select>
+<label>Kategori</label><div style="display:flex;gap:8px;align-items:center"><select id="billCat" style="flex:1"></select><button type="button" class="secondary" onclick="addBillCategory()">+ Ny kategori</button></div>
 <label>Bank/konto</label><select id="billAccount"></select>
 <label>Forfallsdag</label><input id="billDay" type="number" min="1" max="31" required placeholder="F.eks. 20">
 <label>Gjentakelse</label><select id="billFrequency"><option value="monthly">Hver måned</option><option value="quarterly">Hver 3. måned</option><option value="yearly">Hvert år</option></select>
@@ -674,7 +674,7 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 <label>Faktisk belastet i NOK <span class="muted">(valgfritt)</span></label><input id="actualNok" inputmode="decimal" min="0" step=".01" placeholder="F.eks. 1195,42">
 <div id="actualInfo" class="muted" style="margin-top:4px">Hvis du fyller inn faktisk belastet NOK, brukes dette beløpet i budsjettet.</div>
 <label>Type</label><select id="type"><option value="expense">Utgift</option><option value="income">Inntekt</option></select>
-<label>Kategori</label><select id="cat"></select><label>Bank/konto</label><select id="txAccount"></select>
+<label>Kategori</label><select id="cat"></select><label>Bank/konto</label><select id="txAccount"><option value="">🚫 Ingen bank/konto</option></select>
 <label>Dato</label><input id="date" type="date" required>
 <div class="actions2"><button type="button" class="secondary" onclick="closeM('txModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
 
@@ -761,13 +761,14 @@ function save(){
 const kr=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills)); if(!window.__restoringCloud) markLocalDirty();};
-function show(id,b){document.querySelectorAll('main>div').forEach(x=>x.classList.add('hide'));document.getElementById(id).classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');closeMore()}
 function accountLabel(id){let a=accounts.find(x=>x.id===id);return a?a.bank+' – '+a.name:'Ikke valgt'}
 function fillSelects(){
 cat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('')+'<option value="__new">➕ Ny kategori...</option>';
 budgetCat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('');
 let opts=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('');
-txAccount.innerHTML=opts||'<option value="">Opprett en konto først</option>';fromAccount.innerHTML=opts;toAccount.innerHTML=opts;
+txAccount.innerHTML='<option value="">🚫 Ingen bank/konto</option>'+opts;
+fromAccount.innerHTML=opts;toAccount.innerHTML=opts;
 cat.onchange=()=>{if(cat.value==='__new'){cat.value=cats[0];openM('catModal')}}
 }
 function moneyNok(x){return Number(x?.actualNok||x?.nokAmount||x?.amount||0)}
@@ -798,7 +799,41 @@ async function updateCurrencyUI(){
   try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML='<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>'+(a?' · <strong>'+fmtN(calc)+' NOK</strong> beregnet':'');}catch(e){info.textContent='⚠️ '+e.message;}
 }
 function openTx(id){fillSelects();txTitle.textContent=id?'Rediger transaksjon':'Ny transaksjon';let x=tx.find(a=>a.id===id);txId.value=id||'';desc.value=x?.desc||'';amount.value=x?.amount??'';currency.value=x?.currency||'NOK';actualNok.value=x?.actualNok??'';type.value=x?.type||'expense';date.value=x?.date||new Date().toISOString().slice(0,10);if(x){cat.value=x.cat;txAccount.value=x.accountId||''}updateCurrencyUI();openM('txModal')}
-async function saveTx(e){e.preventDefault();if(!txAccount.value){alert('Velg en bank/konto først.');return}const c=currency.value||'NOK', a=parseMoneyValue(amount.value);if(!(a>=0)){alert('Skriv inn et gyldig beløp.');return}let rate=1,nokAmount=a;if(c!=='NOK'){try{rate=await fetchNokRate(c,date.value);nokAmount=Math.round(a*rate*100)/100}catch(err){alert(err.message);return}}const actual=parseMoneyValue(actualNok.value);let id=txId.value,x={id:id||uid(),desc:desc.value.trim(),amount:a,currency:c,rate,nokAmount,actualNok:actual>0?actual:null,type:type.value,cat:cat.value,accountId:txAccount.value,date:date.value};if(id)tx=tx.map(a=>a.id===id?x:a);else tx.push(x);persist();closeM('txModal');e.target.reset();render()}
+async function saveTx(e){
+  e.preventDefault();
+  const txAccountEl=document.getElementById('txAccount');
+  const amountEl=document.getElementById('amount');
+  const currencyEl=document.getElementById('currency');
+  const dateEl=document.getElementById('date');
+  const actualNokEl=document.getElementById('actualNok');
+  const typeEl=document.getElementById('type');
+  const catEl=document.getElementById('cat');
+  const descEl=document.getElementById('desc');
+  const txIdEl=document.getElementById('txId');
+  // Konto er valgfri for transaksjoner.
+  const c=currencyEl.value||'NOK';
+  const a=parseMoneyValue(amountEl.value);
+  if(!(a>0)){alert('Skriv inn et beløp større enn 0.');return}
+  if(!dateEl.value){alert('Velg en dato.');return}
+  let rate=1,nokAmount=a;
+  if(c!=='NOK'){
+    try{rate=await fetchNokRate(c,dateEl.value);nokAmount=Math.round(a*rate*100)/100}
+    catch(err){alert(err.message);return}
+  }
+  const actual=parseMoneyValue(actualNokEl.value);
+  const id=txIdEl.value;
+  const x={id:id||uid(),desc:descEl.value.trim(),amount:a,currency:c,rate,nokAmount,actualNok:actual>0?actual:null,type:typeEl.value,cat:catEl.value,accountId:txAccountEl.value,date:dateEl.value};
+  try{
+    if(id) tx=tx.map(a=>a.id===id?x:a); else tx.push(x);
+    // Save both the legacy stores and the newer shared data store.
+    save();
+    closeM('txModal');
+    e.target.reset();
+    render();
+  }catch(err){
+    alert('Transaksjonen kunne ikke lagres: '+(err?.message||err));
+  }
+}
 function saveCat(e){e.preventDefault();let n=newCat.value.trim();if(n&&!cats.includes(n))cats.push(n);persist();closeM('catModal');e.target.reset();render()}
 function openAccount(id){let a=accounts.find(x=>x.id===id);accountTitle.textContent=a?'Rediger konto':'Ny konto';accountId.value=id||'';bankName.value=a?.bank||'';accountName.value=a?.name||'';openingBalance.value=a?.opening||0;openM('accountModal')}
 function saveAccount(e){e.preventDefault();let id=accountId.value,x={id:id||crypto.randomUUID(),bank:bankName.value.trim(),name:accountName.value.trim(),opening:+openingBalance.value};if(id)accounts=accounts.map(a=>a.id===id?x:a);else accounts.push(x);persist();closeM('accountModal');e.target.reset();render()}
@@ -826,6 +861,20 @@ async function updateBillCurrencyUI(){
   if(c==='NOK'){info.innerHTML='<strong>🇳🇴 NOK</strong> – ingen omregning nødvendig.';return;}
   info.textContent='⏳ Henter siste tilgjengelige dagskurs fra Norges Bank…';
   try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML='<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>'+(a?' · <strong>'+fmtN(calc)+' NOK</strong> estimert':'')+'<br><span class="muted">Regningen lagres i '+c+' og NOK-estimatet oppdateres når appen beregner kommende regninger.</span>';}catch(e){info.textContent='⚠️ '+e.message;}
+}
+function addBillCategory(){
+  const name=prompt('Navn på ny kategori:');
+  if(name===null) return;
+  const c=name.trim();
+  if(!c) return;
+  if(cats.some(x=>String(x).toLowerCase()===c.toLowerCase())){
+    alert('Kategorien finnes allerede.');
+    return;
+  }
+  cats.push(c);
+  persist();
+  fillBillSelects();
+  document.getElementById('billCat').value=c;
 }
 function openBill(id){
   fillBillSelects();
@@ -904,8 +953,18 @@ function fillFilters(){
   filterAccount.innerHTML=ac;filterCategory.innerHTML=cc;filterAccount.value=oldA;filterCategory.value=oldC;filterType.value=oldT;
 }
 function filteredItems(items){
-  let q=(searchTx.value||'').toLowerCase(),a=filterAccount.value,c=filterCategory.value,t=filterType.value;
-  return items.filter(x=>(!q||(x.desc+' '+x.cat+' '+accountLabel(x.accountId)).toLowerCase().includes(q))&&(!a||x.accountId===a)&&(!c||x.cat===c)&&(!t||x.type===t));
+  const searchEl=document.getElementById('searchTx');
+  const accountEl=document.getElementById('filterAccount');
+  const categoryEl=document.getElementById('filterCategory');
+  const typeEl=document.getElementById('filterType');
+  const q=(searchEl?.value||'').trim().toLowerCase();
+  const a=accountEl?.value||'';
+  const c=categoryEl?.value||'';
+  const t=typeEl?.value||'';
+  return items.filter(x=>
+    (!q||(String(x.desc||'')+' '+String(x.cat||'')+' '+String(accountLabel(x.accountId)||'')).toLowerCase().includes(q))&&
+    (!a||x.accountId===a)&&(!c||x.cat===c)&&(!t||x.type===t)
+  );
 }
 
 
@@ -1529,8 +1588,12 @@ function renderMobilePreview(){
 }
 
 
+const DEFAULT_NHOST_CONFIG={subdomain:'nyfckyoepjswibwhoov',region:'eu-central-1'};
 function loadNhostConfig(){
-  try{return JSON.parse(localStorage.getItem('mo6_nhost_config')||'{}')}catch(e){return {}}
+  try{
+    const saved=JSON.parse(localStorage.getItem('mo6_nhost_config')||'null');
+    return {...DEFAULT_NHOST_CONFIG,...(saved||{})};
+  }catch(e){return {...DEFAULT_NHOST_CONFIG}}
 }
 function saveNhostConfig(){
   const cfg={
@@ -1577,7 +1640,7 @@ async function graphqlRequest(query,variables={},retry=true){
 }
 function snapshotPayload(){
   return {
-    version:37,
+    version:46,
     savedAt:new Date().toISOString(),
     transactions:tx,
     categories:cats,
@@ -1599,16 +1662,67 @@ function lastCloudSync(){return localStorage.getItem('mo6_nhost_last_sync_at')||
 function setAutoSyncStatus(html){const el=document.getElementById('autoSyncStatus');if(el)el.innerHTML=html;}
 function markLocalDirty(){localStorage.setItem('mo6_nhost_local_dirty','1'); scheduleAutoSync();}
 function localDirty(){return localStorage.getItem('mo6_nhost_local_dirty')==='1';}
-async function getCloudMeta(){const result=await graphqlRequest(`query GetAppStateMeta{app_state(limit:1){id updated_at}}`);return result?.app_state?.[0]||null;}
+async function getCloudMeta(){const result=await graphqlRequest(`query GetAppStateMeta{app_state(limit:1){id data updated_at}}`);return result?.app_state?.[0]||null;}
+function mergeSnapshots(local,cloud){
+  const arr=(a)=>Array.isArray(a)?a:[];
+  const mergeById=(localArr,cloudArr, fallbackKey)=>{
+    const out=arr(cloudArr).map(x=>({...x}));
+    const keys=new Set(out.map(x=>String(x?.id ?? (fallbackKey?fallbackKey(x):JSON.stringify(x)))));
+    for(const x of arr(localArr)){
+      const k=String(x?.id ?? (fallbackKey?fallbackKey(x):JSON.stringify(x)));
+      if(keys.has(k)){
+        const i=out.findIndex(y=>String(y?.id ?? (fallbackKey?fallbackKey(y):JSON.stringify(y)))===k);
+        if(i>=0) out[i]={...out[i],...x};
+      }else{out.push({...x});keys.add(k);}
+    }
+    return out;
+  };
+  const byCat=x=>x?.cat||x?.category||x?.name||JSON.stringify(x);
+  return {
+    version:47, savedAt:new Date().toISOString(),
+    transactions:mergeById(local.transactions,cloud.transactions,x=>x?.id||[x?.date,x?.desc,x?.amount,x?.accountId].join('|')),
+    categories:Array.from(new Set([...arr(cloud.categories),...arr(local.categories)])),
+    accounts:mergeById(local.accounts,cloud.accounts,x=>x?.id||[x?.bank,x?.name].join('|')),
+    budgets:mergeById(local.budgets,cloud.budgets,byCat),
+    savingsGoals:mergeById(local.savingsGoals,cloud.savingsGoals,x=>x?.id||[x?.name,x?.target].join('|')),
+    transfers:mergeById(local.transfers,cloud.transfers,x=>x?.id||[x?.date,x?.from,x?.to,x?.amount].join('|')),
+    recurringBills:mergeById(local.recurringBills,cloud.recurringBills,x=>x?.id||[x?.name,x?.dueDate,x?.amount].join('|')),
+    creditCards:mergeById(local.creditCards,cloud.creditCards,x=>x?.id||x?.name),
+    loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
+    assets:mergeById(local.assets,cloud.assets,x=>x?.id||x?.name),
+    spendSettings:(local.spendSettings&&typeof local.spendSettings==='object')?local.spendSettings:(cloud.spendSettings||{buffer:0})
+  };
+}
+
 async function cloudBackup(opts={auto:false}){
   const payload=snapshotPayload();
-  const existing=await graphqlRequest(`query GetAppStateId{app_state(limit:1){id updated_at}}`);
+  const existing=await graphqlRequest(`query GetAppStateId{app_state(limit:1){id data updated_at}}`);
   const row=existing?.app_state?.[0];
   const last=lastCloudSync();
   if(row?.updated_at && last && new Date(row.updated_at).getTime()>new Date(last).getTime()+1000){
-    setAutoSyncStatus('<div class="sync-neutral">⚠️ Konfliktbeskyttelse: Skydata er endret siden siste synk. Ingen lokale data ble overskrevet i skyen. Velg «Hent sikkerhetskopi» hvis du vil bruke skyversjonen.</div>');
-    if(!opts.auto) throw new Error('Skydata er endret siden siste synk. Konfliktbeskyttelse stoppet overskriving.');
-    return false;
+    // v46: merge non-conflicting records instead of rejecting the whole snapshot.
+    // For records with the same id, local data wins; new cloud-only records are retained.
+    if(row.data && typeof row.data==='object'){
+      const merged=mergeSnapshots(payload,row.data);
+      window.__restoringCloud=true;
+      tx=merged.transactions; cats=merged.categories; accounts=merged.accounts; bud=merged.budgets;
+      goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills;
+      data.creditCards=merged.creditCards; data.loans=merged.loans; data.assets=merged.assets;
+      data.spendSettings=merged.spendSettings;
+      save();
+      window.__restoringCloud=false;
+      const mergedPayload=snapshotPayload();
+      setAutoSyncStatus('<div class="sync-neutral">🔄 Lokal og skydata ble slått sammen. Nye poster beholdes, og eksisterende lokale poster overskrives ikke.</div>');
+      // Continue below and write the merged snapshot to the cloud.
+      payload.transactions=mergedPayload.transactions; payload.categories=mergedPayload.categories; payload.accounts=mergedPayload.accounts;
+      payload.budgets=mergedPayload.budgets; payload.savingsGoals=mergedPayload.savingsGoals; payload.transfers=mergedPayload.transfers;
+      payload.recurringBills=mergedPayload.recurringBills; payload.creditCards=mergedPayload.creditCards; payload.loans=mergedPayload.loans;
+      payload.assets=mergedPayload.assets; payload.spendSettings=mergedPayload.spendSettings; payload.savedAt=mergedPayload.savedAt;
+    }else{
+      setAutoSyncStatus('<div class="sync-neutral">⚠️ Skydata er endret siden siste synk, men kunne ikke leses. Ingen data ble overskrevet.</div>');
+      if(!opts.auto) throw new Error('Skydata er endret siden siste synk.');
+      return false;
+    }
   }
   let serverUpdatedAt='';
   if(row?.id){
@@ -1620,7 +1734,9 @@ async function cloudBackup(opts={auto:false}){
   }
   localStorage.setItem('mo6_nhost_last_sync_at',serverUpdatedAt||new Date().toISOString());
   localStorage.removeItem('mo6_nhost_local_dirty');
-  document.getElementById('syncInfo').innerHTML='<div class="sync-good">🟢 Synkronisert til Nhost. '+new Date(payload.savedAt).toLocaleString('nb-NO')+'</div>';
+  const syncText='🟢 Synkronisert til Nhost. '+new Date(payload.savedAt).toLocaleString('nb-NO');
+  document.getElementById('syncInfo').innerHTML='<div class="sync-good">'+syncText+'</div>';
+  const settingsSyncStatusEl=document.getElementById('settingsSyncStatus'); if(settingsSyncStatusEl) settingsSyncStatusEl.innerHTML=syncText;
   setAutoSyncStatus(autoSyncEnabled()?'<div class="sync-good">🔄 Automatisk synk er aktiv.</div>':'');
   return true;
 }
@@ -1668,7 +1784,9 @@ async function cloudRestore(){
   window.__restoringCloud=false;
   localStorage.setItem('mo6_nhost_last_sync_at',row.updated_at);
   localStorage.removeItem('mo6_nhost_local_dirty');
-  document.getElementById('syncInfo').innerHTML='<div class="sync-good">🟢 Lokal data er hentet fra Nhost-sikkerhetskopien.</div>';
+  const restoreText='🟢 Lokal data er hentet fra Nhost-sikkerhetskopien.';
+  document.getElementById('syncInfo').innerHTML='<div class="sync-good">'+restoreText+'</div>';
+  const settingsSyncStatusEl2=document.getElementById('settingsSyncStatus'); if(settingsSyncStatusEl2) settingsSyncStatusEl2.innerHTML=restoreText;
   setAutoSyncStatus(autoSyncEnabled()?'<div class="sync-good">🔄 Automatisk synk er aktiv.</div>':'');
 }
 function renderNhost(){
@@ -1697,7 +1815,7 @@ async function nhostRequest(path, body){
   return data;
 }
 function renderAuthStatus(text, good=false){
-  document.getElementById('nhostAuthStatus').innerHTML=
+  document.getElementById('loginStatus').innerHTML=
     `<div class="${good?'sync-good':'sync-neutral'}">${text}</div>`;
 }
 document.getElementById('saveNhostConfig').addEventListener('click',saveNhostConfig);
@@ -1721,47 +1839,70 @@ document.getElementById('testNhost').addEventListener('click',async()=>{
   }
 });
 
-document.getElementById('nhostSignUp').addEventListener('click',async()=>{
+async function enterApp(){
+  document.getElementById('authScreen').classList.add('hide');
+  document.getElementById('appShell').classList.remove('hide');
+  show('overview',document.querySelector('.tab'));
+  const badge=document.getElementById('syncBadge');
+  if(badge) badge.textContent='☁️ Innlogget';
+  render();
+}
+async function leaveApp(){
+  const cfg=loadNhostConfig();
+  const session=getSession();
+  if(cfg.subdomain&&session?.refreshToken){
+    try{await fetch(nhostUrls(cfg).auth+'/signout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.accessToken},body:JSON.stringify({refreshToken:session.refreshToken})});}catch(e){}
+  }
+  localStorage.removeItem('mo6_nhost_session');
+  document.getElementById('appShell').classList.add('hide');
+  document.getElementById('authScreen').classList.remove('hide');
+  document.getElementById('loginPassword').value='';
+  document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⚪ Du er logget ut.</div>';
+}
+document.getElementById('loginBtn').addEventListener('click',async()=>{
   try{
-    const email=document.getElementById('nhostEmail').value.trim();
-    const password=document.getElementById('nhostPassword').value;
+    const email=document.getElementById('loginEmail').value.trim();
+    const password=document.getElementById('loginPassword').value;
     if(!email||!password) throw new Error('Skriv inn e-post og passord.');
-    const data=await nhostRequest('/signup/email-password',{email,password,options:{allowedRoles:['me','user'],defaultRole:'user'}});
-    renderAuthStatus(data?.session?'🟢 Konto opprettet og innlogget.':'🟢 Konto opprettet. Sjekk e-posten hvis verifisering kreves.',true);
-  }catch(e){renderAuthStatus('⚠️ '+e.message)}
-});
-
-document.getElementById('nhostSignIn').addEventListener('click',async()=>{
-  try{
-    const email=document.getElementById('nhostEmail').value.trim();
-    const password=document.getElementById('nhostPassword').value;
-    if(!email||!password) throw new Error('Skriv inn e-post og passord.');
+    document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⏳ Logger inn…</div>';
     const data=await nhostRequest('/signin/email-password',{email,password});
     if(data?.session){
-      localStorage.setItem('mo6_nhost_session',JSON.stringify(data.session));
-      renderAuthStatus('🟢 Innlogget i Nhost. 🎉',true);
+      saveSession(data.session);
+      document.getElementById('loginStatus').innerHTML='<div class="sync-good">🟢 Innlogget. 🎉</div>';
+      await enterApp();
     }else throw new Error('Ingen aktiv sesjon ble returnert.');
-  }catch(e){renderAuthStatus('⚠️ '+e.message)}
+  }catch(e){document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}
 });
-
-document.getElementById('nhostSignOut').addEventListener('click',async()=>{
-  const cfg=loadNhostConfig();
-  const session=JSON.parse(localStorage.getItem('mo6_nhost_session')||'null');
-  if(!cfg.subdomain||!session?.refreshToken){
-    localStorage.removeItem('mo6_nhost_session');
-    renderAuthStatus('⚪ Ingen lokal Nhost-sesjon å logge ut av.');
-    return;
-  }
+document.getElementById('signupBtn').addEventListener('click',async()=>{
   try{
-    await fetch(nhostUrls(cfg).auth+'/signout',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.accessToken},
-      body:JSON.stringify({refreshToken:session.refreshToken})
-    });
-  }catch(e){}
-  localStorage.removeItem('mo6_nhost_session');
-  renderAuthStatus('⚪ Logget ut.');
+    const email=document.getElementById('loginEmail').value.trim();
+    const password=document.getElementById('loginPassword').value;
+    if(!email||!password) throw new Error('Skriv inn e-post og passord.');
+    document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⏳ Oppretter konto…</div>';
+    const data=await nhostRequest('/signup/email-password',{email,password,options:{allowedRoles:['me','user'],defaultRole:'user'}});
+    if(data?.session){
+      saveSession(data.session);
+      document.getElementById('loginStatus').innerHTML='<div class="sync-good">🟢 Konto opprettet og innlogget. 🎉</div>';
+      await enterApp();
+    }else{
+      document.getElementById('loginStatus').innerHTML='<div class="sync-good">🟢 Konto opprettet. Sjekk e-posten hvis verifisering kreves, og logg deretter inn her.</div>';
+    }
+  }catch(e){document.getElementById('loginStatus').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}
 });
+document.getElementById('logoutBtn').addEventListener('click',leaveApp);
+document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click();});
+
+async function initAuthGate(){
+  const sess=getSession();
+  if(sess?.accessToken){await enterApp();return;}
+  if(sess?.refreshToken){
+    const fresh=await refreshNhostSession();
+    if(fresh?.accessToken){await enterApp();return;}
+    localStorage.removeItem('mo6_nhost_session');
+  }
+  document.getElementById('authScreen').classList.remove('hide');
+  document.getElementById('appShell').classList.add('hide');
+}
 
 document.getElementById('prepareSync').addEventListener('click',()=>{
   const cfg=loadNhostConfig();
@@ -1770,9 +1911,10 @@ document.getElementById('prepareSync').addEventListener('click',()=>{
     `<div class="sync-neutral">🧩 Klar for neste steg: ${cfg.subdomain?'Nhost er konfigurert':'Nhost mangler oppsett'} · ${session?'brukerøkt finnes lokalt':'ingen innlogget bruker'} · lokale data er urørt.</div>`;
 });
 
-document.getElementById('cloudBackup').addEventListener('click',async()=>{try{document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⏳ Lagrer sikkerhetssynk…</div>';await cloudBackup()}catch(e){document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}});
-document.getElementById('cloudRestore').addEventListener('click',async()=>{try{document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⏳ Henter sikkerhetskopi…</div>';await cloudRestore()}catch(e){document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}});
+document.getElementById('cloudBackup').addEventListener('click',async()=>{try{document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⏳ Lagrer sikkerhetssynk…</div>'; const s=document.getElementById('settingsSyncStatus'); if(s)s.innerHTML='⏳ Lagrer sikkerhetssynk…'; await cloudBackup()}catch(e){document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>'; const s=document.getElementById('settingsSyncStatus'); if(s)s.innerHTML='⚠️ '+esc(e.message);}});
+document.getElementById('cloudRestore').addEventListener('click',async()=>{try{document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⏳ Henter sikkerhetskopi…</div>'; const s=document.getElementById('settingsSyncStatus'); if(s)s.innerHTML='⏳ Henter sikkerhetskopi…'; await cloudRestore()}catch(e){document.getElementById('syncInfo').innerHTML='<div class="sync-neutral">⚠️ '+esc(e.message)+'</div>';}});
 const autoSyncEl=document.getElementById('autoSync');
+const settingsAuto=document.getElementById('settingsAutoSync'); const settingsSyncStatus=document.getElementById('settingsSyncStatus'); if(settingsAuto){settingsAuto.checked=autoSyncEnabled(); settingsAuto.addEventListener('change',()=>{if(autoSyncEl){autoSyncEl.checked=settingsAuto.checked; autoSyncEl.dispatchEvent(new Event('change'));} settingsSyncStatus.textContent=settingsAuto.checked?'Automatisk synkronisering er aktiv.':'Automatisk synkronisering er satt på pause.';});}
 if(autoSyncEl){autoSyncEl.checked=autoSyncEnabled(); autoSyncEl.addEventListener('change',()=>{localStorage.setItem('mo6_auto_sync',autoSyncEl.checked?'1':'0'); if(autoSyncEl.checked){setAutoSyncStatus('<div class="sync-good">🔄 Automatisk synk er aktivert. Endringer synkroniseres etter kort ventetid, med konfliktbeskyttelse.</div>'); scheduleAutoSync();}else{clearTimeout(autoSyncTimer);setAutoSyncStatus('<div class="sync-neutral">⏸️ Automatisk synk er satt på pause.</div>');}});}
 if(autoSyncEnabled()){setAutoSyncStatus('<div class="sync-good">🔄 Automatisk synk er aktiv.</div>'); setInterval(checkCloudChanges,30000);}
 renderNhost();
@@ -1785,7 +1927,7 @@ function render(){
   renderForecast();
   renderCalendar();
   renderSpend();
-fillSelects();renderBills();renderAnalytics();let ym=new Date().toISOString().slice(0,7),allMonth=tx.filter(x=>x.date.slice(0,7)===ym);fillFilters();let items=filteredItems(allMonth);
+fillSelects();renderBills();renderAnalytics();let ym=new Date().toISOString().slice(0,7),allMonth=tx.filter(x=>x.date.slice(0,7)===ym);fillFilters();let items=filteredItems(tx);
 let inc=allMonth.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),exp=allMonth.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0);
 month.textContent=new Date().toLocaleDateString('nb-NO',{month:'long',year:'numeric'});income.textContent=kr(inc);expense.textContent=kr(exp);balance.textContent=kr(inc-exp);el('overviewAccountBalance').textContent=kr(accounts.reduce((s,a)=>s+acctBalance(a),0));
 accountSummary.innerHTML=accounts.map(a=>'<div class="row"><div class="rowtop"><b>'+esc(a.bank)+' – '+esc(a.name)+'</b><strong>'+kr(acctBalance(a))+'</strong></div></div>').join('')||'<div class="empty">Ingen kontoer ennå.</div>';
@@ -1798,11 +1940,11 @@ let spent={};items.filter(x=>x.type==='expense').forEach(x=>spent[x.cat]=(spent[
 budgets.innerHTML=bud.map((b,i)=>{let s=spent[b.cat]||0,p=b.amount?Math.round(s/b.amount*100):0;return '<div class="row"><div class="rowtop"><b>'+esc(b.cat)+'</b><span>'+kr(s)+' / '+kr(b.amount)+'</span></div><div class="progress"><div class="bar '+(p>100?'over':'')+'" style="width:'+Math.min(p,100)+'%"></div></div><small>'+p+'% brukt <button class="danger" style="float:right;padding:5px 8px" onclick="delBud('+i+')">Slett</button></small></div>'}).join('')||'<div class="empty">Ingen budsjetter ennå.</div>';
 document.getElementById('goals').innerHTML=goals.map((g,i)=>{let p=Math.min(100,Math.round(g.current/g.target*100));return '<div class="row"><div class="rowtop"><b>🎯 '+esc(g.name)+'</b><span>'+kr(g.current)+' / '+kr(g.target)+'</span></div><div class="progress"><div class="bar" style="width:'+p+'%"></div></div><small>'+p+'% spart <button class="secondary" style="float:right;padding:5px 8px" onclick="addGoal('+i+')">+ Sparing</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="delGoal('+i+')">Slett</button></small></div>'}).join('')||'<div class="empty">Ingen sparemål ennå.</div>';
 }
-render();
 ['searchTx','filterAccount','filterCategory','filterType'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 window.addEventListener('resize',()=>{if(!document.getElementById('analytics').classList.contains('hide'))renderAnalytics()});
 </script>
 <script>
+initAuthGate();
 if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}
 let deferredInstallPrompt=null;
 window.addEventListener("beforeinstallprompt",(e)=>{
