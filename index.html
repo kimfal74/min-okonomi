@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="no">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -36,6 +36,28 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 /* Mobile layout: prevent the whole page from becoming wider than the phone. */
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 *,*:before,*:after{box-sizing:border-box}
+/* Customizable overview */
+.overview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.overview-block{min-width:0}
+.overview-block.overview-hidden{display:none!important}
+.overview-details{margin-top:15px;background:white;border:1px solid #e4e7ed;border-radius:15px;overflow:hidden}
+.overview-details summary{list-style:none;cursor:pointer;padding:17px 18px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.overview-details summary::-webkit-details-marker{display:none}
+.overview-details summary:after{content:'▾';color:#687080;font-size:16px}
+.overview-details:not([open]) summary:after{content:'▸'}
+.overview-details .overview-body{padding:0 18px 18px}
+.overview-details .overview-body>.dashboard-grid{margin-top:0}
+.overview-details .overview-body>.quick-grid{margin-top:0!important}
+.overview-details .quick-card{margin-top:0}
+.overview-details .quick-card+.quick-card{margin-top:0}
+.overview-customize-list{display:flex;flex-direction:column;gap:9px;margin:14px 0}
+.overview-customize-item{display:flex;align-items:center;gap:8px;padding:11px 10px;border:1px solid #e4e7ed;border-radius:11px;background:#f8f9fc}
+.overview-drag{font-size:20px;color:#687080;cursor:grab;touch-action:none}
+.overview-customize-item.dragging{opacity:.55}
+.overview-customize-item .overview-name{flex:1;min-width:0;font-weight:700}
+.overview-customize-item .move-btn{padding:7px 9px;background:#fff;color:#2448c9;border:1px solid #dfe5f2}
+.overview-customize-item .move-btn:disabled{opacity:.35;cursor:default}
+.overview-customize-item input[type=checkbox]{width:auto}
 @media(max-width:700px){
   main{width:100%;max-width:100%;margin:16px 0;padding:0 12px}
   header{width:100%;max-width:100%;overflow:hidden}
@@ -54,6 +76,91 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   .actions2 button{max-width:100%}
   .dialog{width:calc(100vw - 24px);max-width:480px}
 }
+
+/* v59b: Mobile navigation as one compact dropdown */
+.mobile-nav-toggle-v59,
+.mobile-nav-menu-v59{
+  display:none;
+}
+
+@media (max-width:700px){
+  .nav-scroll{
+    position:relative !important;
+    display:block !important;
+    overflow:visible !important;
+    white-space:normal !important;
+    flex:0 0 auto !important;
+    width:100% !important;
+  }
+
+  .desktop-nav-v59{
+    display:none !important;
+  }
+
+  .mobile-nav-toggle-v59{
+    display:flex !important;
+    width:100% !important;
+    min-height:48px;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 14px !important;
+    border:1px solid var(--border,#ddd) !important;
+    border-radius:12px !important;
+    background:var(--card,#fff) !important;
+    color:inherit !important;
+    font:inherit !important;
+    font-weight:700 !important;
+    cursor:pointer;
+    box-sizing:border-box;
+  }
+
+  .mobile-nav-menu-v59{
+    position:absolute;
+    z-index:1000;
+    left:0;
+    right:0;
+    top:calc(100% + 6px);
+    padding:6px !important;
+    border:1px solid var(--border,#ddd) !important;
+    border-radius:12px !important;
+    background:var(--card,#fff) !important;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+    box-sizing:border-box;
+  }
+
+  .mobile-nav-menu-v59.open{
+    display:block !important;
+  }
+
+  .mobile-nav-menu-v59 .tab{
+    display:block !important;
+    width:100% !important;
+    min-height:44px;
+    margin:0 !important;
+    padding:10px 12px !important;
+    text-align:left !important;
+    border-radius:9px !important;
+    box-sizing:border-box;
+  }
+
+  .mobile-nav-menu-v59 .tab + .tab{
+    margin-top:2px !important;
+  }
+}
+
+@media (min-width:701px){
+  .mobile-nav-toggle-v59,
+  .mobile-nav-menu-v59{
+    display:none !important;
+  }
+  .desktop-nav-v59{
+    display:flex !important;
+    align-items:center;
+    gap:8px;
+  }
+}
+
 </style>
 
 <style>
@@ -234,29 +341,54 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <div id="appShell" class="hide">
 <header>
 <div class="logo">Min <span>Økonomi</span></div>
+
 <nav class="nav-scroll">
-<div class="nav-primary">
-<button class="tab active" onclick="show('overview',this)">🏠 Oversikt</button>
-<button class="tab" onclick="show('transactions',this)">💰 Transaksjoner</button>
-<button class="tab" onclick="show('accounts',this)">🏦 Kontoer</button>
-<button class="tab" onclick="show('budget',this)">📊 Budsjett</button>
-<button class="tab" onclick="show('savings',this)">🎯 Sparemål</button>
-<button class="tab" onclick="show('bills',this)">📅 Regninger</button>
-<button class="tab" onclick="show('analytics',this)">📈 Analyse</button>
-<button class="tab" onclick="show('tab-debt',this)">💳 Gjeld & formue</button>
+  <button type="button" class="mobile-nav-toggle-v59" aria-expanded="false">
+    <span>☰ Navigasjon</span><span class="mobile-nav-chevron-v59">▾</span>
+  </button>
+  <div class="desktop-nav-v59">
+    <div class="nav-primary">
+      <button class="tab active" onclick="show('overview',this)">🏠 Oversikt</button>
+      <button class="tab" onclick="show('transactions',this)">💰 Transaksjoner</button>
+      <button class="tab" onclick="show('accounts',this)">🏦 Kontoer</button>
+      <button class="tab" onclick="show('budget',this)">📊 Budsjett</button>
+      <button class="tab" onclick="show('savings',this)">🎯 Sparemål</button>
+      <button class="tab" onclick="show('bills',this)">📅 Regninger</button>
+      <button class="tab" onclick="show('analytics',this)">📈 Analyse</button>
+      <button class="tab" onclick="show('tab-debt',this)">💳 Gjeld &amp; formue</button>
+    </div>
+    <div class="nav-more">
+      <button id="moreBtn" class="tab" type="button" onclick="toggleMore(event)">⋯ Mer ▾</button>
+      <div id="moreMenu" class="more-menu" role="menu">
+        <button class="tab" data-more="true" onclick="show('tab-spend',this);closeMore()">🧮 Beregninger</button>
+        <button class="tab" data-more="true" onclick="show('tab-scenario',this);closeMore()">🔮 Scenario</button>
+        <button class="tab" data-more="true" onclick="show('tab-calendar',this);closeMore()">🗓️ Kalender</button>
+        <button class="tab" data-more="true" onclick="show('tab-forecast',this);closeMore()">📈 Prognose</button>
+        <button class="tab" data-more="true" onclick="show('tab-assistant',this);closeMore()">🧠 Assistent</button>
+        <button class="tab" data-more="true" onclick="show('settings',this);closeMore()">⚙️ Innstillinger</button>
+      </div>
+    </div>
+  </div>
+  
+<div class="mobile-nav-menu-v59" aria-hidden="true">
+  <button class="tab" type="button" onclick="show('overview',this)">🏠 Oversikt</button>
+  <button class="tab" type="button" onclick="show('transactions',this)">💰 Transaksjoner</button>
+  <button class="tab" type="button" onclick="show('accounts',this)">🏦 Kontoer</button>
+  <button class="tab" type="button" onclick="show('budget',this)">📊 Budsjett</button>
+  <button class="tab" type="button" onclick="show('savings',this)">🎯 Sparemål</button>
+  <button class="tab" type="button" onclick="show('bills',this)">📅 Regninger</button>
+  <button class="tab" type="button" onclick="show('analytics',this)">📈 Analyse</button>
+  <button class="tab" type="button" onclick="show('tab-debt',this)">💳 Gjeld &amp; formue</button>
+  <button class="tab" type="button" onclick="show('tab-spend',this)">🧮 Beregninger</button>
+  <button class="tab" type="button" onclick="show('tab-scenario',this)">🔮 Scenario</button>
+  <button class="tab" type="button" onclick="show('tab-calendar',this)">🗓️ Kalender</button>
+  <button class="tab" type="button" onclick="show('tab-forecast',this)">📈 Prognose</button>
+  <button class="tab" type="button" onclick="show('tab-assistant',this)">🧠 Assistent</button>
+  <button class="tab" type="button" onclick="show('settings',this)">⚙️ Innstillinger</button>
 </div>
-<div class="nav-more">
-<button id="moreBtn" class="tab" type="button" onclick="toggleMore(event)">⋯ Mer ▾</button>
-<div id="moreMenu" class="more-menu" role="menu">
-<button class="tab" data-more="true" onclick="show('tab-spend',this);closeMore()">🧮 Beregninger</button>
-<button class="tab" data-more="true" onclick="show('tab-scenario',this);closeMore()">🔮 Scenario</button>
-<button class="tab" data-more="true" onclick="show('tab-calendar',this);closeMore()">🗓️ Kalender</button>
-<button class="tab" data-more="true" onclick="show('tab-forecast',this);closeMore()">📈 Prognose</button>
-<button class="tab" data-more="true" onclick="show('tab-assistant',this);closeMore()">🧠 Assistent</button>
-<button class="tab" data-more="true" onclick="show('settings',this);closeMore()">⚙️ Innstillinger</button>
-</div>
-</div>
+
 </nav>
+
 <div class="header-user">
 <span id="syncBadge" class="sync-badge">☁️ Innlogget</span>
 <button class="secondary" id="logoutBtn" type="button">🚪 Logg ut</button>
@@ -266,20 +398,37 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 
 <main>
 <div id="overview">
-<h1>Oversikt</h1><p class="muted" id="month"></p>
-<div class="dashboard-grid">
+<div class="overview-toolbar"><div><h1 style="margin-bottom:4px">Oversikt</h1><p class="muted" id="month"></p></div><button class="secondary" type="button" onclick="openOverviewCustomize()">⚙️ Tilpass oversikt</button></div>
+<div id="overviewBlocks">
+<details class="overview-details overview-block" data-overview-key="summary" open>
+<summary>📊 Månedsoversikt</summary>
+<div class="overview-body"><div class="dashboard-grid">
 <div class="card"><div class="muted">Inntekter denne måneden</div><div class="value income" id="income">0 kr</div></div>
 <div class="card"><div class="muted">Utgifter denne måneden</div><div class="value expense" id="expense">0 kr</div></div>
 <div class="card"><div class="muted">Netto denne måneden</div><div class="value balance" id="balance">0 kr</div></div>
 <div class="card"><div class="muted">Saldo på kontoer</div><div class="value" id="overviewAccountBalance">0 kr</div></div>
+</div></div></details>
+
+<details class="overview-details overview-block" data-overview-key="accounts">
+<summary>🏦 Kontoer</summary>
+<div class="overview-body"><div class="quick-grid"><div class="quick-card"><p class="muted">Samlet saldo og bankkontoer.</p><div id="accountSummary"></div><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">Se kontoer</button></div></div></div></details>
+
+<details class="overview-details overview-block" data-overview-key="spend">
+<summary>💸 Forbruk</summary>
+<div class="overview-body"><div class="quick-grid"><div class="quick-card"><p class="muted">Se hvor pengene går.</p><div id="cats"></div><button class="secondary" onclick="show('analytics',document.querySelectorAll('.tab')[6])">Se analyse</button></div></div></div></details>
+
+<details class="overview-details overview-block" data-overview-key="bills">
+<summary>📅 Regninger</summary>
+<div class="overview-body"><div class="quick-grid"><div class="quick-card"><p class="muted">Hold oversikt over kommende betalinger.</p><div class="muted">Se neste forfall under Regninger.</div><button class="secondary" onclick="show('bills',document.querySelectorAll('.tab')[5])">Se regninger</button></div></div></div></details>
+
+<details class="overview-details overview-block" data-overview-key="savings">
+<summary>🎯 Sparemål</summary>
+<div class="overview-body"><div class="quick-grid"><div class="quick-card"><p class="muted">Følg fremdriften mot målene dine.</p><div class="muted">Se status og fremdrift under Sparemål.</div><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">Se sparemål</button></div></div></div></details>
+
+<details class="overview-details overview-block" data-overview-key="quickstart">
+<summary>✨ Hurtigstart</summary>
+<div class="overview-body"><div class="card" style="margin-top:0"><p class="muted">Legg raskt til det du trenger.</p><div class="actions2"><button onclick="openTx()">+ Legg til transaksjon</button><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">🏦 Konto</button><button class="secondary" onclick="show('budget',document.querySelectorAll('.tab')[3])">📊 Budsjett</button><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">🎯 Sparemål</button></div></div></div></details>
 </div>
-<div class="quick-grid" style="margin-top:15px">
-<div class="quick-card"><h3>🏦 Kontoer</h3><p class="muted">Samlet saldo og bankkontoer.</p><div id="accountSummary"></div><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">Se kontoer</button></div>
-<div class="quick-card"><h3>💸 Forbruk</h3><p class="muted">Se hvor pengene går.</p><div id="cats"></div><button class="secondary" onclick="show('analytics',document.querySelectorAll('.tab')[6])">Se analyse</button></div>
-<div class="quick-card"><h3>📅 Regninger</h3><p class="muted">Hold oversikt over kommende betalinger.</p><div class="muted">Se neste forfall under Regninger.</div><button class="secondary" onclick="show('bills',document.querySelectorAll('.tab')[5])">Se regninger</button></div>
-<div class="quick-card"><h3>🎯 Sparemål</h3><p class="muted">Følg fremdriften mot målene dine.</p><div class="muted">Se status og fremdrift under Sparemål.</div><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">Se sparemål</button></div>
-</div>
-<div class="card" style="margin-top:15px"><h2>✨ Hurtigstart</h2><p class="muted">Legg raskt til det du trenger.</p><div class="actions2"><button onclick="openTx()">+ Legg til transaksjon</button><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">🏦 Konto</button><button class="secondary" onclick="show('budget',document.querySelectorAll('.tab')[3])">📊 Budsjett</button><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">🎯 Sparemål</button></div></div>
 </div>
 
 <div id="transactions" class="hide">
@@ -678,6 +827,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 </div>
 
 
+<div class="modal" id="overviewCustomizeModal"><div class="dialog"><h2>⚙️ Tilpass oversikt</h2><p class="muted">Dra bolkene i ønsket rekkefølge, eller bruk pilene på mobilen. Du kan også skjule bolker du ikke trenger.</p><div id="overviewCustomizeList" class="overview-customize-list"></div><div class="actions2"><button class="secondary" type="button" onclick="closeM('overviewCustomizeModal')">Ferdig</button></div></div></div>
 <div class="modal" id="billModal"><div class="dialog"><h2 id="billTitle">Ny fast regning</h2>
 <form onsubmit="saveBill(event)"><input id="billId" type="hidden">
 <label>Navn</label><input id="billName" required placeholder="F.eks. Strøm">
@@ -764,6 +914,18 @@ function readExtraData(){
   }
 }
 const extraData=readExtraData();
+const OVERVIEW_DEFAULT_ORDER=['summary','accounts','spend','bills','savings','quickstart'];
+const OVERVIEW_NAMES={summary:'📊 Månedsoversikt',accounts:'🏦 Kontoer',spend:'💸 Forbruk',bills:'📅 Regninger',savings:'🎯 Sparemål',quickstart:'✨ Hurtigstart'};
+function loadOverviewPrefs(){try{const x=JSON.parse(localStorage.getItem('mo7_overview_prefs')||'null')||{};const order=Array.isArray(x.order)?x.order.filter(k=>OVERVIEW_DEFAULT_ORDER.includes(k)):[];return {order:[...order,...OVERVIEW_DEFAULT_ORDER.filter(k=>!order.includes(k))],hidden:(x.hidden&&typeof x.hidden==='object')?x.hidden:{},open:(x.open&&typeof x.open==='object')?x.open:{}}}catch(e){return {order:OVERVIEW_DEFAULT_ORDER.slice(),hidden:{},open:{}}}}
+let overviewPrefs=loadOverviewPrefs();
+function saveOverviewPrefs(){localStorage.setItem('mo7_overview_prefs',JSON.stringify(overviewPrefs)); if(typeof markLocalDirty==='function'&&!window.__restoringCloud)markLocalDirty();}
+function applyOverviewLayout(){const wrap=document.getElementById('overviewBlocks');if(!wrap)return;overviewPrefs.order.forEach(k=>{const el=wrap.querySelector('[data-overview-key="'+k+'"]');if(el)wrap.appendChild(el)});wrap.querySelectorAll('[data-overview-key]').forEach(el=>{const k=el.dataset.overviewKey;el.classList.toggle('overview-hidden',overviewPrefs.hidden[k]===true);if(overviewPrefs.open[k]===true)el.open=true;else if(overviewPrefs.open[k]===false)el.open=false;if(el.dataset.overviewBound!=='1'){el.addEventListener('toggle',()=>{overviewPrefs.open[k]=el.open;saveOverviewPrefs()});el.dataset.overviewBound='1'}})}
+function renderOverviewCustomize(){const list=document.getElementById('overviewCustomizeList');if(!list)return;list.innerHTML=overviewPrefs.order.map((k,i)=>'<div class="overview-customize-item" draggable="true" data-key="'+k+'"><span class="overview-drag">☰</span><span class="overview-name">'+OVERVIEW_NAMES[k]+'</span><label style="display:flex;align-items:center;gap:5px;margin:0;font-weight:600;font-size:12px"><input type="checkbox" '+(overviewPrefs.hidden[k]?'':'checked')+' onchange="setOverviewVisible(\''+k+'\',this.checked)"> Vis</label><button class="move-btn" type="button" onclick="moveOverview(\''+k+'\',-1)" '+(i===0?'disabled':'')+'>↑</button><button class="move-btn" type="button" onclick="moveOverview(\''+k+'\',1)" '+(i===overviewPrefs.order.length-1?'disabled':'')+'>↓</button></div>').join('');
+list.querySelectorAll('.overview-customize-item').forEach(item=>{item.addEventListener('dragstart',()=>{item.classList.add('dragging')});item.addEventListener('dragend',()=>{item.classList.remove('dragging');saveOverviewDragOrder()})});list.addEventListener('dragover',e=>{e.preventDefault();const dragging=list.querySelector('.dragging');if(!dragging)return;const target=[...list.querySelectorAll('.overview-customize-item:not(.dragging)')].find(el=>{const r=el.getBoundingClientRect();return e.clientY<r.top+r.height/2});if(target)list.insertBefore(dragging,target);else list.appendChild(dragging)});}
+function saveOverviewDragOrder(){const list=document.getElementById('overviewCustomizeList');if(!list)return;overviewPrefs.order=[...list.querySelectorAll('.overview-customize-item')].map(x=>x.dataset.key);saveOverviewPrefs();applyOverviewLayout();renderOverviewCustomize()}
+function moveOverview(key,delta){const i=overviewPrefs.order.indexOf(key),j=i+delta;if(i<0||j<0||j>=overviewPrefs.order.length)return;[overviewPrefs.order[i],overviewPrefs.order[j]]=[overviewPrefs.order[j],overviewPrefs.order[i]];saveOverviewPrefs();applyOverviewLayout();renderOverviewCustomize()}
+function setOverviewVisible(key,visible){overviewPrefs.hidden[key]=!visible;saveOverviewPrefs();applyOverviewLayout()}
+function openOverviewCustomize(){renderOverviewCustomize();openM('overviewCustomizeModal')}
 
 function uid(){
   if(window.crypto && typeof window.crypto.randomUUID==='function') return window.crypto.randomUUID();
@@ -1045,7 +1207,8 @@ function exportData(){
     version:6,
     exportedAt:new Date().toISOString(),
     transactions:tx,categories:cats,accounts:accounts,budgets:bud,goals:goals,transfers:transfers,bills:bills,
-    creditCards:data.creditCards||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0}
+    creditCards:data.creditCards||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0},
+    overviewPrefs:overviewPrefs
   };
   downloadBlob('min-okonomi-sikkerhetskopi.json',JSON.stringify(backup,null,2),'application/json');
 }
@@ -1776,7 +1939,8 @@ function mergeSnapshots(local,cloud){
     creditCards:mergeById(local.creditCards,cloud.creditCards,x=>x?.id||x?.name),
     loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
     assets:mergeById(local.assets,cloud.assets,x=>x?.id||x?.name),
-    spendSettings:(local.spendSettings&&typeof local.spendSettings==='object')?local.spendSettings:(cloud.spendSettings||{buffer:0})
+    spendSettings:(local.spendSettings&&typeof local.spendSettings==='object')?local.spendSettings:(cloud.spendSettings||{buffer:0}),
+    overviewPrefs:(local.overviewPrefs&&typeof local.overviewPrefs==='object')?local.overviewPrefs:(cloud.overviewPrefs||loadOverviewPrefs())
   };
 }
 
@@ -1795,6 +1959,7 @@ async function cloudBackup(opts={auto:false}){
       goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills;
       data.creditCards=merged.creditCards; data.loans=merged.loans; data.assets=merged.assets;
       data.spendSettings=merged.spendSettings;
+      overviewPrefs=merged.overviewPrefs||loadOverviewPrefs(); saveOverviewPrefs();
       save();
       window.__restoringCloud=false;
       const mergedPayload=snapshotPayload();
@@ -1866,6 +2031,7 @@ async function cloudRestore(){
   data.loans=Array.isArray(b.loans)?b.loans:[];
   data.assets=Array.isArray(b.assets)?b.assets:[];
   data.spendSettings=(b.spendSettings&&typeof b.spendSettings==='object')?b.spendSettings:{buffer:0};
+  overviewPrefs=b.overviewPrefs||loadOverviewPrefs(); saveOverviewPrefs();
   save(); render();
   window.__restoringCloud=false;
   localStorage.setItem('mo6_nhost_last_sync_at',row.updated_at);
@@ -2108,6 +2274,7 @@ if(autoSyncEnabled()){setAutoSyncStatus('<div class="sync-good">🔄 Automatisk 
 renderNhost();
 
 function render(){
+  applyOverviewLayout();
   renderMobilePreview();
   renderDashboard();
   renderDebt();
@@ -2165,5 +2332,61 @@ if(installBtn){installBtn.addEventListener("click",async()=>{
 
 try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);window.__curTimer=setTimeout(updateCurrencyUI,250)});el('date').addEventListener('change',updateCurrencyUI)}catch(e){}
 </script>
+
+<script>
+/* v59b: mobile navigation dropdown behavior */
+(function(){
+  function initMobileNavigation(){
+    const nav = document.querySelector('.nav-scroll');
+    if(!nav || nav.dataset.v59bReady) return;
+    const toggle = nav.querySelector('.mobile-nav-toggle-v59');
+    const menu = nav.querySelector('.mobile-nav-menu-v59');
+    if(!toggle || !menu) return;
+    nav.dataset.v59bReady = '1';
+
+    function closeMobileNav(){
+      menu.classList.remove('open');
+      toggle.setAttribute('aria-expanded','false');
+      menu.setAttribute('aria-hidden','true');
+      const chevron = toggle.querySelector('.mobile-nav-chevron-v59');
+      if(chevron) chevron.textContent = '▾';
+    }
+
+    function openMobileNav(){
+      menu.classList.add('open');
+      toggle.setAttribute('aria-expanded','true');
+      menu.setAttribute('aria-hidden','false');
+      const chevron = toggle.querySelector('.mobile-nav-chevron-v59');
+      if(chevron) chevron.textContent = '▴';
+    }
+
+    toggle.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(menu.classList.contains('open')) closeMobileNav();
+      else openMobileNav();
+    });
+
+    menu.addEventListener('click', function(e){
+      const item = e.target.closest('button');
+      if(item) setTimeout(closeMobileNav, 0);
+    });
+
+    document.addEventListener('click', function(e){
+      if(!nav.contains(e.target)) closeMobileNav();
+    });
+
+    window.addEventListener('resize', function(){
+      if(window.innerWidth > 700) closeMobileNav();
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initMobileNavigation);
+  }else{
+    initMobileNavigation();
+  }
+})();
+</script>
+
 </body>
 </html>
