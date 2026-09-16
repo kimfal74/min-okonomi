@@ -126,9 +126,12 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
     background:var(--card,#fff) !important;
     box-shadow:0 10px 30px rgba(0,0,0,.22) !important;
     box-sizing:border-box;
-    max-height:calc(100vh - 90px);
+    max-height:calc(100dvh - 12px);
     overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
+    touch-action:pan-y;
   }
 
   .mobile-nav-menu-v59.open{
@@ -2369,7 +2372,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
-/* v60c: mobile navigation dropdown behavior */
+/* v60d: mobile navigation dropdown with reliable iPhone scrolling */
 (function(){
   function initMobileNavigation(){
     const nav = document.querySelector('.nav-scroll');
@@ -2394,8 +2397,13 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
       const right = Math.max(margin, viewportWidth - r.right);
       menu.style.left = left + 'px';
       menu.style.right = right + 'px';
-      menu.style.top = (r.bottom + 6) + 'px';
+      const top = r.bottom + 6;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const availableHeight = Math.max(180, viewportHeight - top - 12);
+      menu.style.top = top + 'px';
       menu.style.width = Math.max(0, viewportWidth - left - right) + 'px';
+      menu.style.maxHeight = availableHeight + 'px';
+      menu.style.height = 'auto';
     }
 
     function closeMobileNav(){
