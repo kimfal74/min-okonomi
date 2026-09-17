@@ -2438,7 +2438,7 @@ async function graphqlRequest(query,variables={},retry=true){
 }
 function snapshotPayload(){
   return {
-    version:48,
+    version:75,
     savedAt:new Date().toISOString(),
     transactions:tx,
     categories:cats,
@@ -2480,7 +2480,7 @@ function mergeSnapshots(local,cloud){
   };
   const byCat=x=>x?.cat||x?.category||x?.name||JSON.stringify(x);
   return {
-    version:47, savedAt:new Date().toISOString(),
+    version:75, savedAt:new Date().toISOString(),
     transactions:mergeById(local.transactions,cloud.transactions,x=>x?.id||[x?.date,x?.desc,x?.amount,x?.accountId].join('|')),
     categories:Array.from(new Set([...arr(cloud.categories),...arr(local.categories)])),
     accounts:mergeById(local.accounts,cloud.accounts,x=>x?.id||[x?.bank,x?.name].join('|')),
@@ -2663,11 +2663,85 @@ document.getElementById('testNhost').addEventListener('click',async()=>{
   }
 });
 
+
+async function syncAccountOnLogin(){
+  // v75: Når samme Nhost-konto brukes på flere enheter, skal skydata hentes
+  // automatisk ved innlogging. Lokale usynkroniserte endringer beholdes ved merge.
+  try{
+    const row=await getCloudMeta();
+    const cloud=row?.data;
+    const localPayload=snapshotPayload();
+    const localHasData=[
+      localPayload.transactions,localPayload.accounts,localPayload.budgets,
+      localPayload.savingsGoals,localPayload.transfers,localPayload.recurringBills,
+      localPayload.subscriptions,localPayload.creditCards,localPayload.creditPurchases,
+      localPayload.loans,localPayload.assets
+    ].some(a=>Array.isArray(a)&&a.length>0);
+
+    if(!row?.id || !cloud){
+      if(localHasData) await cloudBackup({auto:true});
+      return;
+    }
+
+    if(localDirty()){
+      // Det finnes lokale endringer som ikke er synkronisert. Slå sammen begge
+      // datasett og lagre det sammenslåtte resultatet tilbake til skyen.
+      const merged=mergeSnapshots(localPayload,cloud);
+      window.__restoringCloud=true;
+      tx=merged.transactions; cats=merged.categories; accounts=merged.accounts;
+      bud=merged.budgets; goals=merged.savingsGoals; transfers=merged.transfers;
+      bills=merged.recurringBills; subscriptions=merged.subscriptions;
+      data.creditCards=merged.creditCards; data.creditPurchases=merged.creditPurchases;
+      data.loans=merged.loans; data.assets=merged.assets;
+      data.spendSettings=merged.spendSettings;
+      overviewPrefs=merged.overviewPrefs||loadOverviewPrefs();
+      if(Array.isArray(merged.debtOrder))debtOrder=merged.debtOrder;
+      if(Array.isArray(merged.billOrder))billOrder=merged.billOrder;
+      saveReorderPrefs('debt',debtOrder); saveReorderPrefs('bills',billOrder);
+      saveOverviewPrefs(); save();
+      window.__restoringCloud=false;
+      await cloudBackup({auto:true});
+    }else{
+      // Ingen lokale usynkroniserte endringer: skyen er felles kilde mellom
+      // enheter, så den lokale kopien erstattes med siste skydata.
+      window.__restoringCloud=true;
+      tx=Array.isArray(cloud.transactions)?cloud.transactions:[];
+      cats=Array.isArray(cloud.categories)?cloud.categories:cats;
+      accounts=Array.isArray(cloud.accounts)?cloud.accounts:[];
+      bud=Array.isArray(cloud.budgets)?cloud.budgets:[];
+      goals=Array.isArray(cloud.savingsGoals)?cloud.savingsGoals:[];
+      transfers=Array.isArray(cloud.transfers)?cloud.transfers:[];
+      bills=Array.isArray(cloud.recurringBills)?cloud.recurringBills:[];
+      subscriptions=Array.isArray(cloud.subscriptions)?cloud.subscriptions:[];
+      data.creditCards=Array.isArray(cloud.creditCards)?cloud.creditCards:[];
+      data.creditPurchases=Array.isArray(cloud.creditPurchases)?cloud.creditPurchases:[];
+      data.loans=Array.isArray(cloud.loans)?cloud.loans:[];
+      data.assets=Array.isArray(cloud.assets)?cloud.assets:[];
+      data.spendSettings=(cloud.spendSettings&&typeof cloud.spendSettings==='object')?cloud.spendSettings:{buffer:0};
+      overviewPrefs=cloud.overviewPrefs||loadOverviewPrefs();
+      if(Array.isArray(cloud.debtOrder))debtOrder=cloud.debtOrder;
+      if(Array.isArray(cloud.billOrder))billOrder=cloud.billOrder;
+      saveReorderPrefs('debt',debtOrder); saveReorderPrefs('bills',billOrder);
+      saveOverviewPrefs(); save();
+      window.__restoringCloud=false;
+      localStorage.setItem('mo6_nhost_last_sync_at',row.updated_at||new Date().toISOString());
+      localStorage.removeItem('mo6_nhost_local_dirty');
+    }
+    setAutoSyncStatus('<div class="sync-good">🟢 Kontoet er synkronisert med Nhost.</div>');
+  }catch(e){
+    window.__restoringCloud=false;
+    setAutoSyncStatus('<div class="sync-neutral">⚠️ Kunne ikke hente siste data fra Nhost nå. Lokale data er beholdt.</div>');
+    console.warn('v75 account sync:',e);
+  }
+}
+
 async function enterApp(){
   document.getElementById('authScreen').classList.add('hide');
   document.getElementById('appShell').classList.remove('hide');
   show('overview',document.querySelector('.tab'));
   const badge=document.getElementById('syncBadge');
+  if(badge) badge.textContent='☁️ Synkroniserer…';
+  await syncAccountOnLogin();
   if(badge) badge.textContent='☁️ Innlogget';
   render();
 }
