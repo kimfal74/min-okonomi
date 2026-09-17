@@ -50,6 +50,13 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 .reorderable-section.dragging{opacity:.45}
 .reorderable-section.drop-target{outline:2px dashed #315efb;outline-offset:2px}
 .reorder-hint{font-size:.85rem;color:#687080;margin:4px 0 14px}
+.page-customize-link{text-align:right;margin:18px 0 4px}
+.page-customize-link button{font-weight:700}
+.reorder-customize-list{display:flex;flex-direction:column;gap:8px;margin:15px 0}
+.reorder-customize-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#f7f8fb;border:1px solid #e4e7ed;border-radius:10px;cursor:grab;font-weight:700}
+.reorder-customize-item.dragging{opacity:.45}
+.reorder-customize-item.drop-target{outline:2px dashed #315efb;outline-offset:2px}
+@media(max-width:700px){.page-customize-link{text-align:center}.page-customize-link button{width:100%}}
 @media (max-width:700px){
   .reorder-handle{font-size:.8rem}
   .reorder-actions{margin-left:6px}
@@ -539,6 +546,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 </div>
+<div class="page-customize-link"><button type="button" class="secondary" onclick="openReorderCustomize('bills')">⚙️ Tilpass regninger</button></div>
 </div>
 <section id="tab-debt" class="tab-panel hide">
   <div class="section-head">
@@ -632,6 +640,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
       </div>
     </div>
   </details>
+  <div class="page-customize-link"><button type="button" class="secondary" onclick="openReorderCustomize('debt')">⚙️ Tilpass gjeld &amp; formue</button></div>
 </section>
 
 
@@ -929,6 +938,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 </div>
 
 
+<div class="modal" id="reorderCustomizeModal"><div class="dialog"><h2 id="reorderCustomizeTitle">⚙️ Tilpass</h2><p class="muted">Dra boksene i ønsket rekkefølge, eller bruk pilene på mobilen.</p><div id="reorderCustomizeList" class="reorder-customize-list"></div><div class="actions2"><button class="secondary" type="button" onclick="closeM('reorderCustomizeModal')">Ferdig</button></div></div></div>
 <div class="modal" id="overviewCustomizeModal"><div class="dialog"><h2>⚙️ Tilpass oversikt</h2><p class="muted">Dra bolkene i ønsket rekkefølge, eller bruk pilene på mobilen. Du kan også skjule bolker du ikke trenger.</p><div id="overviewCustomizeList" class="overview-customize-list"></div><div class="actions2"><button class="secondary" type="button" onclick="closeM('overviewCustomizeModal')">Ferdig</button></div></div></div>
 <div class="modal" id="billModal"><div class="dialog"><h2 id="billTitle">Ny fast regning</h2>
 <form onsubmit="saveBill(event)"><input id="billId" type="hidden">
@@ -1076,7 +1086,12 @@ txAccount.innerHTML='<option value="">🚫 Ingen bank/konto</option>'+opts;
 fromAccount.innerHTML=opts;toAccount.innerHTML=opts;
 cat.onchange=()=>{if(cat.value==='__new'){cat.value=cats[0];openM('catModal')}}
 }
-function moneyNok(x){return Number(x?.actualNok||x?.nokAmount||x?.amount||0)}
+function moneyNok(x){
+  if(Number(x?.actualNok)>0)return Number(x.actualNok);
+  if(Number(x?.nokAmount)>0)return Number(x.nokAmount);
+  if((x?.currency||'NOK')==='NOK')return Number(x?.amount||0);
+  return 0;
+}
 function currencySymbol(c){return ({NOK:'kr',EUR:'€',USD:'$',GBP:'£',SEK:'kr',DKK:'kr',CHF:'CHF'})[c]||c}
 function parseMoneyValue(v){let s=String(v??'').trim().replace(/\u00a0/g,' ').replace(/\s+/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(s.includes(','))s=s.replace(',','.');let n=Number(s);return Number.isFinite(n)?n:0}
 function rateKey(currency,date){return 'mo_currency_rate_'+currency+'_'+date}
@@ -1097,7 +1112,13 @@ function parseCsvLine(line){
 async function fetchNokRate(currency,date){
   if(currency==='NOK') return 1;
   const cached=localStorage.getItem(rateKey(currency,date)); if(cached&&Number(cached)>0)return Number(cached);
-  const end=new Date(date+'T12:00:00'); if(isNaN(end))throw new Error('Ugyldig dato');
+  const requested=new Date(date+'T12:00:00'); if(isNaN(requested))throw new Error('Ugyldig dato');
+  const today=new Date(); today.setHours(12,0,0,0);
+  // Future dates have no official Norges Bank daily rate yet.
+  // Use the latest available rate as a provisional conversion for saving.
+  // The original requested date is still cached as the transaction's rate date.
+  const isFuture=requested.getTime()>today.getTime();
+  const end=new Date(isFuture?today:requested);
   for(let back=0;back<=7;back++){
     const d=new Date(end); d.setDate(d.getDate()-back); const ds=d.toISOString().slice(0,10);
     try{
@@ -1125,15 +1146,20 @@ async function fetchNokRate(currency,date){
       }
     }catch(e){}
   }
-  throw new Error('Fant ingen valutakurs fra Norges Bank for denne datoen. Du kan prøve igjen eller bruke NOK.');
+  throw new Error(isFuture
+    ? 'Ingen tilgjengelig valutakurs akkurat nå. Transaksjonen kan fortsatt lagres uten omregning.'
+    : 'Fant ingen valutakurs fra Norges Bank for denne datoen. Du kan prøve igjen eller bruke NOK.');
 }
 async function updateCurrencyUI(){
   const c=el('currency').value, d=el('date').value, info=el('currencyInfo');
   const a=parseMoneyValue(el('amount').value);
   if(c==='NOK'){info.innerHTML='<strong>🇳🇴 NOK</strong> – ingen omregning nødvendig.';return;}
   if(!d){info.textContent='Velg dato først.';return;}
-  info.textContent='⏳ Henter dagskurs fra Norges Bank…';
-  try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML='<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>'+(a?' · <strong>'+fmtN(calc)+' NOK</strong> beregnet':'');}catch(e){info.textContent='⚠️ '+e.message;}
+  const requested=new Date(d+'T12:00:00'),today=new Date();today.setHours(12,0,0,0);
+  const isFuture=!isNaN(requested)&&requested.getTime()>today.getTime();
+  info.textContent=isFuture?'⏳ Henter siste tilgjengelige kurs fra Norges Bank…':'⏳ Henter dagskurs fra Norges Bank…';
+  try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML=(isFuture?'<strong>1 '+c+' ≈ '+fmtN(rate)+' NOK</strong> · <span class="muted">foreløpig kurs</span>':'<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>')+(a?' · <strong>'+fmtN(calc)+' NOK</strong> beregnet':'');}
+  catch(e){info.textContent=isFuture?'ℹ️ Fremtidig transaksjon kan lagres uten valutakurs. Fyll inn faktisk belastet NOK hvis du kjenner beløpet.':'⚠️ '+e.message;}
 }
 function openTx(id){fillSelects();txTitle.textContent=id?'Rediger transaksjon':'Ny transaksjon';let x=tx.find(a=>a.id===id);txId.value=id||'';desc.value=x?.desc||'';amount.value=x?.amount??'';currency.value=x?.currency||'NOK';actualNok.value=x?.actualNok??'';type.value=x?.type||'expense';date.value=x?.date||new Date().toISOString().slice(0,10);if(x){cat.value=x.cat;txAccount.value=x.accountId||''}updateCurrencyUI();openM('txModal')}
 async function saveTx(e){
@@ -1154,8 +1180,13 @@ async function saveTx(e){
   if(!dateEl.value){alert('Velg en dato.');return}
   let rate=1,nokAmount=a;
   if(c!=='NOK'){
+    const requested=new Date(dateEl.value+'T12:00:00'),today=new Date();today.setHours(12,0,0,0);
+    const isFuture=!isNaN(requested)&&requested.getTime()>today.getTime();
     try{rate=await fetchNokRate(c,dateEl.value);nokAmount=Math.round(a*rate*100)/100}
-    catch(err){alert(err.message);return}
+    catch(err){
+      if(isFuture){rate=null;nokAmount=null}
+      else {alert(err.message);return}
+    }
   }
   const actual=parseMoneyValue(actualNokEl.value);
   const id=txIdEl.value;
@@ -2579,6 +2610,50 @@ function bindReorder(kind,containerId){
   });
 }
 
+
+const REORDER_NAMES={
+  debt:{creditCards:'💳 Kredittkort',creditPurchases:'🛍️ Kjøpskreditt',loans:'🏦 Lån',assets:'🏠 Andre eiendeler'},
+  bills:{myBills:'📋 Mine regninger',upcomingPayments:'💰 Kommende betalinger'}
+};
+function openReorderCustomize(kind){
+  const modal=document.getElementById('reorderCustomizeModal'),list=document.getElementById('reorderCustomizeList'),title=document.getElementById('reorderCustomizeTitle');
+  if(!modal||!list)return;
+  const names=REORDER_NAMES[kind]||{},order=kind==='debt'?debtOrder:billOrder;
+  title.textContent=kind==='debt'?'⚙️ Tilpass gjeld & formue':'⚙️ Tilpass regninger';
+  list.innerHTML=order.map(key=>`<div class="reorder-customize-item" draggable="true" data-key="${key}">
+    <span style="color:#687080">☰</span><span style="flex:1">${names[key]||key}</span>
+    <button type="button" class="secondary customize-up" data-kind="${kind}" data-delta="-1">↑</button>
+    <button type="button" class="secondary customize-down" data-kind="${kind}" data-delta="1">↓</button>
+  </div>`).join('');
+  list.dataset.kind=kind;bindReorderCustomize();modal.classList.add('open');
+}
+function bindReorderCustomize(){
+  const list=document.getElementById('reorderCustomizeList');if(!list||list.dataset.bound==='1')return;
+  list.dataset.bound='1';
+  list.addEventListener('click',e=>{
+    const btn=e.target.closest('.customize-up,.customize-down');if(!btn)return;
+    e.preventDefault();e.stopPropagation();
+    const item=btn.closest('.reorder-customize-item'),kind=list.dataset.kind,arr=kind==='debt'?debtOrder:billOrder;
+    const i=arr.indexOf(item.dataset.key),j=i+Number(btn.dataset.delta);if(i<0||j<0||j>=arr.length)return;
+    [arr[i],arr[j]]=[arr[j],arr[i]];saveReorderPrefs(kind,arr);
+    if(kind==='debt')applyReorder('debt','tab-debt');else applyReorder('bills','billSections');
+    openReorderCustomize(kind);
+  });
+  let drag=null;
+  list.addEventListener('dragstart',e=>{const item=e.target.closest('.reorder-customize-item');if(!item)return;drag=item;item.classList.add('dragging');if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',item.dataset.key);}});
+  list.addEventListener('dragend',()=>{if(drag)drag.classList.remove('dragging');list.querySelectorAll('.reorder-customize-item').forEach(x=>x.classList.remove('drop-target'));drag=null;});
+  list.addEventListener('dragover',e=>{const item=e.target.closest('.reorder-customize-item');if(!item||!drag||item===drag)return;e.preventDefault();item.classList.add('drop-target');});
+  list.addEventListener('dragleave',e=>{const item=e.target.closest('.reorder-customize-item');if(item)item.classList.remove('drop-target');});
+  list.addEventListener('drop',e=>{
+    const item=e.target.closest('.reorder-customize-item');if(!item||!drag||item===drag)return;e.preventDefault();item.classList.remove('drop-target');
+    const kind=list.dataset.kind,arr=kind==='debt'?debtOrder:billOrder,from=arr.indexOf(drag.dataset.key),to=arr.indexOf(item.dataset.key);if(from<0||to<0)return;
+    if(from<to)item.after(drag);else item.before(drag);
+    const next=[...list.querySelectorAll('.reorder-customize-item')].map(x=>x.dataset.key);
+    if(kind==='debt')debtOrder=next;else billOrder=next;saveReorderPrefs(kind,next);
+    if(kind==='debt')applyReorder('debt','tab-debt');else applyReorder('bills','billSections');
+  });
+}
+
 function render(){
   applyOverviewLayout();
   applyReorder('debt','tab-debt');
@@ -2642,6 +2717,8 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
+/* v68: future currency transactions can be saved without a future official rate */
+/* v67: customization links at bottom of reorderable pages */
 /* v66: reorderable Gjeld & formue + Faste regninger sections */
 /* v65: recurring bill payment tracking */
 /* v64: collapsible Gjeld & formue sections */
