@@ -2438,7 +2438,7 @@ async function graphqlRequest(query,variables={},retry=true){
 }
 function snapshotPayload(){
   return {
-    version:75,
+    version:48,
     savedAt:new Date().toISOString(),
     transactions:tx,
     categories:cats,
@@ -2480,7 +2480,7 @@ function mergeSnapshots(local,cloud){
   };
   const byCat=x=>x?.cat||x?.category||x?.name||JSON.stringify(x);
   return {
-    version:75, savedAt:new Date().toISOString(),
+    version:47, savedAt:new Date().toISOString(),
     transactions:mergeById(local.transactions,cloud.transactions,x=>x?.id||[x?.date,x?.desc,x?.amount,x?.accountId].join('|')),
     categories:Array.from(new Set([...arr(cloud.categories),...arr(local.categories)])),
     accounts:mergeById(local.accounts,cloud.accounts,x=>x?.id||[x?.bank,x?.name].join('|')),
@@ -2512,7 +2512,7 @@ async function cloudBackup(opts={auto:false}){
       const merged=mergeSnapshots(payload,row.data);
       window.__restoringCloud=true;
       tx=merged.transactions; cats=merged.categories; accounts=merged.accounts; bud=merged.budgets;
-      goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills; subscriptions=merged.subscriptions;
+      goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills;
       data.creditCards=merged.creditCards; data.creditPurchases=merged.creditPurchases; data.loans=merged.loans; data.assets=merged.assets;
       data.spendSettings=merged.spendSettings;
       overviewPrefs=merged.overviewPrefs||loadOverviewPrefs();
