@@ -1123,7 +1123,15 @@ function save(){
   localStorage.setItem('mo7_data',JSON.stringify({
     creditCards:data.creditCards||[],
     creditPurchases:data.creditPurchases||[],
-    subscriptions:data.subscriptions||[],
+    subscriptions:(data.subscriptions||[]).map(s=>{
+      if((s?.currency||'NOK')==='NOK')return {...s,nokRate:1,nokAmount:Number(s.amount)||0,nokRateDate:new Date().toISOString().slice(0,10)};
+      const hasStored=Number(s?.nokRate)>0&&Number(s?.nokAmount)>0;
+      if(hasStored)return {...s};
+      const date=new Date().toISOString().slice(0,10);
+      const cached=localStorage.getItem(rateKey(s.currency,date));
+      const rate=Number(cached);
+      return rate>0?{...s,nokRate:rate,nokAmount:Math.round(Number(s.amount)*rate*100)/100,nokRateDate:date}:{...s};
+    }),
     loans:data.loans||[],
     assets:data.assets||[],
     spendSettings:data.spendSettings||{buffer:0}
@@ -1469,8 +1477,13 @@ function billNokEstimate(b){
   const cached=localStorage.getItem(rateKey(c,new Date().toISOString().slice(0,10)));
   return cached?Math.round(Number(b.amount)*Number(cached)*100)/100:Number(b.amount)||0;
 }
+function subscriptionNokEstimate(s){
+  const stored=Number(s?.nokAmount);
+  if(Number.isFinite(stored)&&stored>0)return stored;
+  return billNokEstimate(s);
+}
 function subscriptionMonthlyAmount(s){
-  const a=billNokEstimate(s);
+  const a=subscriptionNokEstimate(s);
   if(s.frequency==='yearly')return a/12;
   if(s.frequency==='semiannual')return a/6;
   if(s.frequency==='quarterly')return a/3;
@@ -1508,14 +1521,26 @@ function openSubscription(id){
   document.getElementById('subscriptionActive').checked=s?.active!==false;
   openM('subscriptionModal');
 }
-function saveSubscription(e){
+async function saveSubscription(e){
   e.preventDefault();
   const accountId=document.getElementById('subscriptionAccount').value;
   if(!accountId){alert('Velg en bank/konto først.');return}
   const amount=parseMoneyValue(document.getElementById('subscriptionAmount').value);
   if(!(amount>0)){alert('Skriv inn et beløp større enn 0.');return}
   const id=document.getElementById('subscriptionId').value;
-  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency:document.getElementById('subscriptionCurrency').value||'NOK',frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked};
+  const currency=document.getElementById('subscriptionCurrency').value||'NOK';
+  const today=new Date().toISOString().slice(0,10);
+  let nokRate=currency==='NOK'?1:null, nokAmount=currency==='NOK'?amount:null;
+  if(currency!=='NOK'){
+    try{
+      nokRate=await fetchNokRate(currency,today);
+      nokAmount=Math.round(amount*nokRate*100)/100;
+    }catch(err){
+      alert('Kunne ikke hente valutakurs for abonnementet: '+err.message);
+      return;
+    }
+  }
+  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency,frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked,nokRate,nokAmount,nokRateDate:today};
   if(id){subscriptions=subscriptions.map(x=>x.id===id?obj:x)}else subscriptions.push(obj);
   persist();save();closeM('subscriptionModal');e.target.reset();render();
 }
@@ -1551,7 +1576,7 @@ function renderSubscriptions(){
   const sorted=active.slice().sort((a,b)=>String(a.nextDate||'').localeCompare(String(b.nextDate||'')));
   list.innerHTML=sorted.map(s=>{
     const d=subscriptionNextDate(s), freq=s.frequency==='yearly'?'Årlig':s.frequency==='semiannual'?'Hver 6. måned':s.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
-    const display=s.currency&&s.currency!=='NOK'?fmtN(s.amount)+' '+s.currency+' · NOK-estimat '+kr(billNokEstimate(s)):kr(s.amount);
+    const display=s.currency&&s.currency!=='NOK'?fmtN(s.amount)+' '+s.currency+' · NOK-estimat '+kr(subscriptionNokEstimate(s)):kr(s.amount);
     return '<div class="row"><div class="rowtop"><b>📱 '+esc(s.name)+'</b><strong>'+display+'</strong></div><div class="muted">'+esc(freq)+' · '+esc(accountLabel(s.accountId))+' · Neste trekk: <b>'+(d?d.toLocaleDateString('nb-NO'):'–')+'</b></div><div style="margin-top:7px"><button class="primary" style="float:right;padding:5px 8px" onclick="recordSubscriptionPayment(\''+s.id+'\')">✅ Registrer betaling</button><button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openSubscription(\''+s.id+'\')">✏️ Rediger</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteSubscription(\''+s.id+'\')">Slett</button></div></div>';
   }).join('')||'<div class="empty">Ingen aktive abonnementer ennå.</div>';
 }
@@ -2488,7 +2513,12 @@ function mergeSnapshots(local,cloud){
     savingsGoals:mergeById(local.savingsGoals,cloud.savingsGoals,x=>x?.id||[x?.name,x?.target].join('|')),
     transfers:mergeById(local.transfers,cloud.transfers,x=>x?.id||[x?.date,x?.from,x?.to,x?.amount].join('|')),
     recurringBills:mergeById(local.recurringBills,cloud.recurringBills,x=>x?.id||[x?.name,x?.dueDate,x?.amount].join('|')),
-    subscriptions:mergeById(local.subscriptions,cloud.subscriptions,x=>x?.id||[x?.name,x?.nextDate,x?.amount].join('|')),
+    subscriptions:mergeById(local.subscriptions,cloud.subscriptions,x=>x?.id||[x?.name,x?.nextDate,x?.amount].join('|')).map(x=>{
+      const key=y=>String(y?.id||[y?.name,y?.nextDate,y?.amount].join('|'));
+      const l=arr(local.subscriptions).find(y=>key(y)===key(x));
+      const c=arr(cloud.subscriptions).find(y=>key(y)===key(x));
+      return {...x, nokRate:(Number(l?.nokRate)>0?l.nokRate:(Number(c?.nokRate)>0?c.nokRate:x?.nokRate)), nokAmount:(Number(l?.nokAmount)>0?l.nokAmount:(Number(c?.nokAmount)>0?c.nokAmount:x?.nokAmount)), nokRateDate:l?.nokRateDate||c?.nokRateDate||x?.nokRateDate};
+    }),
     creditCards:mergeById(local.creditCards,cloud.creditCards,x=>x?.id||x?.name),
     creditPurchases:mergeById(local.creditPurchases,cloud.creditPurchases,x=>x?.id||[x?.provider,x?.name].join('|')),
     loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
@@ -3039,6 +3069,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
+/* v78: shared subscription NOK estimates are stored and synced */
 /* v69: consistent bottom placement for page customization links */
 /* v67: customization links at bottom of reorderable pages */
 /* v66: reorderable Gjeld & formue + Faste regninger sections */
