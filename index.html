@@ -42,7 +42,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 .overview-block.overview-hidden{display:none!important}
 .overview-details{margin-top:15px;background:white;border:1px solid #e4e7ed;border-radius:15px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .overview-details summary{list-style:none;cursor:pointer;padding:17px 18px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.overview-details summary::-webkit-details-marker{display:none}
+.overview-details summary::-webkit-details-marker{display:none}.debt-details{overflow-x:visible}.upcoming-pay-btn{padding:5px 8px;font-size:12px;white-space:nowrap}.debt-details .debt-panel{margin:0;border:0;padding:0;box-shadow:none;background:transparent}
 .overview-details summary:after{content:'▾';color:#687080;font-size:16px}
 .overview-details:not([open]) summary:after{content:'▸'}
 .overview-details .overview-body{padding:0 18px 18px}
@@ -516,7 +516,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
   <div class="section-head">
     <div>
       <h2>💳 Gjeld & formue</h2>
-      <p class="muted">Legg inn kredittkort, lån og andre eiendeler selv.</p>
+      <p class="muted">Legg inn kredittkort, kjøpskreditt, lån og andre eiendeler selv.</p>
     </div>
   </div>
 
@@ -527,68 +527,82 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     <div class="card"><div class="label">Kredittkort brukt</div><div class="big" id="creditUsed">0 %</div></div>
   </div>
 
-  <div class="grid two">
-    <div class="panel">
-      <h3>💳 Kredittkort</h3>
-      <form id="creditForm" class="form-grid">
-        <input type="hidden" id="creditId">
-        <label>Navn<input id="creditName" required placeholder="F.eks. Bank Norwegian"></label>
-        <label>Kredittgrense<input id="creditLimit" type="number" min="0" step="0.01" required></label>
-        <label>Utestående saldo<input id="creditBalance" type="number" min="0" step="0.01" required></label>
-        <label>Forfallsdag<input id="creditDue" type="number" min="1" max="31" placeholder="15"></label>
-        <button class="primary" type="submit">💾 Lagre kredittkort</button>
-        <button class="secondary" type="button" id="creditCancel" hidden>Avbryt</button>
-      </form>
-      <div id="creditList" class="list"></div>
+  <details class="overview-details debt-details">
+    <summary>💳 Kredittkort</summary>
+    <div class="overview-body">
+      <div class="panel debt-panel">
+        <form id="creditForm" class="form-grid">
+          <input type="hidden" id="creditId">
+          <label>Navn<input id="creditName" required placeholder="F.eks. Bank Norwegian"></label>
+          <label>Kredittgrense<input id="creditLimit" type="number" min="0" step="0.01" required></label>
+          <label>Utestående saldo<input id="creditBalance" type="number" min="0" step="0.01" required></label>
+          <label>Forfallsdag<input id="creditDue" type="number" min="1" max="31" placeholder="15"></label>
+          <button class="primary" type="submit">💾 Lagre kredittkort</button>
+          <button class="secondary" type="button" id="creditCancel" hidden>Avbryt</button>
+        </form>
+        <div id="creditList" class="list"></div>
+      </div>
     </div>
+  </details>
 
-    <div class="panel">
-      <h3>🛍️ Kjøpskreditt</h3>
-      <p class="muted">Kreditt knyttet til kjøp, for eksempel Klarna, Walley, Qliro eller Svea.</p>
-      <form id="purchaseCreditForm" class="form-grid">
-        <input type="hidden" id="purchaseCreditId">
-        <label>Leverandør<select id="purchaseCreditProvider"><option>Klarna</option><option>Walley</option><option>Qliro</option><option>Svea</option><option>Andre</option></select></label>
-        <label>Betalingsmåte<select id="purchaseCreditType"><option>Faktura</option><option>Delbetaling</option><option>Kredittkonto</option><option>Annet</option></select></label>
-        <label>Kjøp / avtale<input id="purchaseCreditName" required placeholder="F.eks. Sofa, PC eller abonnement"></label>
-        <label>Opprinnelig beløp<input id="purchaseCreditOriginal" type="number" min="0" step="0.01" placeholder="2400"></label>
-        <label>Utestående saldo<input id="purchaseCreditBalance" type="number" min="0" step="0.01" required></label>
-        <label>Neste betaling<input id="purchaseCreditPayment" type="number" min="0" step="0.01" placeholder="600"></label>
-        <label>Forfallsdato<input id="purchaseCreditDueDate" type="date"></label>
-        <button class="primary" type="submit">💾 Lagre kjøpskreditt</button>
-        <button class="secondary" type="button" id="purchaseCreditCancel" hidden>Avbryt</button>
-      </form>
-      <div id="purchaseCreditList" class="list"></div>
+  <details class="overview-details debt-details">
+    <summary>🛍️ Kjøpskreditt</summary>
+    <div class="overview-body">
+      <div class="panel debt-panel">
+        <p class="muted">Kreditt knyttet til kjøp, for eksempel Klarna, Walley, Qliro eller Svea.</p>
+        <form id="purchaseCreditForm" class="form-grid">
+          <input type="hidden" id="purchaseCreditId">
+          <label>Leverandør<select id="purchaseCreditProvider"><option>Klarna</option><option>Walley</option><option>Qliro</option><option>Svea</option><option>Andre</option></select></label>
+          <label>Betalingsmåte<select id="purchaseCreditType"><option>Faktura</option><option>Delbetaling</option><option>Kredittkonto</option><option>Annet</option></select></label>
+          <label>Kjøp / avtale<input id="purchaseCreditName" required placeholder="F.eks. Sofa, PC eller abonnement"></label>
+          <label>Opprinnelig beløp<input id="purchaseCreditOriginal" type="number" min="0" step="0.01" placeholder="2400"></label>
+          <label>Utestående saldo<input id="purchaseCreditBalance" type="number" min="0" step="0.01" required></label>
+          <label>Neste betaling<input id="purchaseCreditPayment" type="number" min="0" step="0.01" placeholder="600"></label>
+          <label>Forfallsdato<input id="purchaseCreditDueDate" type="date"></label>
+          <button class="primary" type="submit">💾 Lagre kjøpskreditt</button>
+          <button class="secondary" type="button" id="purchaseCreditCancel" hidden>Avbryt</button>
+        </form>
+        <div id="purchaseCreditList" class="list"></div>
+      </div>
     </div>
+  </details>
 
-    <div class="panel">
-      <h3>🏦 Lån</h3>
-      <form id="loanForm" class="form-grid">
-        <input type="hidden" id="loanId">
-        <label>Navn<input id="loanName" required placeholder="F.eks. Billån"></label>
-        <label>Långiver<input id="loanLender" placeholder="F.eks. DNB"></label>
-        <label>Restgjeld<input id="loanBalance" type="number" min="0" step="0.01" required></label>
-        <label>Rente (%)<input id="loanRate" type="number" min="0" step="0.01"></label>
-        <label>Månedlig betaling<input id="loanPayment" type="number" min="0" step="0.01"></label>
-        <label>Forfallsdag<input id="loanDue" type="number" min="1" max="31" placeholder="20"></label>
-        <button class="primary" type="submit">💾 Lagre lån</button>
-        <button class="secondary" type="button" id="loanCancel" hidden>Avbryt</button>
-      </form>
-      <div id="loanList" class="list"></div>
+  <details class="overview-details debt-details">
+    <summary>🏦 Lån</summary>
+    <div class="overview-body">
+      <div class="panel debt-panel">
+        <form id="loanForm" class="form-grid">
+          <input type="hidden" id="loanId">
+          <label>Navn<input id="loanName" required placeholder="F.eks. Billån"></label>
+          <label>Långiver<input id="loanLender" placeholder="F.eks. DNB"></label>
+          <label>Restgjeld<input id="loanBalance" type="number" min="0" step="0.01" required></label>
+          <label>Rente (%)<input id="loanRate" type="number" min="0" step="0.01"></label>
+          <label>Månedlig betaling<input id="loanPayment" type="number" min="0" step="0.01"></label>
+          <label>Forfallsdag<input id="loanDue" type="number" min="1" max="31" placeholder="20"></label>
+          <button class="primary" type="submit">💾 Lagre lån</button>
+          <button class="secondary" type="button" id="loanCancel" hidden>Avbryt</button>
+        </form>
+        <div id="loanList" class="list"></div>
+      </div>
     </div>
-  </div>
+  </details>
 
-  <div class="panel">
-    <h3>🏠 Andre eiendeler</h3>
-    <p class="muted">Bankkontoene dine regnes allerede som eiendeler. Her kan du legge til f.eks. bolig, bil, fond eller andre verdier uten å telle bankkontoene dobbelt.</p>
-    <form id="assetForm" class="form-grid">
-      <input type="hidden" id="assetId">
-      <label>Navn<input id="assetName" required placeholder="F.eks. Bil"></label>
-      <label>Verdi<input id="assetValue" type="number" min="0" step="0.01" required></label>
-      <button class="primary" type="submit">💾 Lagre eiendel</button>
-      <button class="secondary" type="button" id="assetCancel" hidden>Avbryt</button>
-    </form>
-    <div id="assetList" class="list"></div>
-  </div>
+  <details class="overview-details debt-details">
+    <summary>🏠 Andre eiendeler</summary>
+    <div class="overview-body">
+      <div class="panel debt-panel">
+        <p class="muted">Bankkontoene dine regnes allerede som eiendeler. Her kan du legge til f.eks. bolig, bil, fond eller andre verdier uten å telle bankkontoene dobbelt.</p>
+        <form id="assetForm" class="form-grid">
+          <input type="hidden" id="assetId">
+          <label>Navn<input id="assetName" required placeholder="F.eks. Bil"></label>
+          <label>Verdi<input id="assetValue" type="number" min="0" step="0.01" required></label>
+          <button class="primary" type="submit">💾 Lagre eiendel</button>
+          <button class="secondary" type="button" id="assetCancel" hidden>Avbryt</button>
+        </form>
+        <div id="assetList" class="list"></div>
+      </div>
+    </div>
+  </details>
 </section>
 
 
@@ -1186,15 +1200,59 @@ function saveBill(e){
   const c=billCurrency.value||'NOK', a=parseMoneyValue(billAmount.value);
   if(!(a>=0)){alert('Skriv inn et gyldig beløp.');return}
   let id=billId.value;
+  const oldBill=id?bills.find(x=>x.id===id):null;
   let b={id:id||uid(),name:billName.value.trim(),amount:a,currency:c,cat:billCat.value,accountId:billAccount.value,day:+billDay.value,frequency:billFrequency.value};
+  if(oldBill){if(oldBill.lastPaidForDate)b.lastPaidForDate=oldBill.lastPaidForDate;if(oldBill.lastPaidDate)b.lastPaidDate=oldBill.lastPaidDate;}
   if(id)bills=bills.map(x=>x.id===id?b:x);else bills.push(b);
   persist();closeM('billModal');e.target.reset();render();
 }
 function deleteBill(id){if(confirm('Slette denne faste regningen?')){bills=bills.filter(x=>x.id!==id);persist();render()}}
+async function recordBillPayment(id){
+  const b=bills.find(x=>x.id===id);
+  if(!b)return;
+  if(!b.accountId){alert('Denne regningen har ingen bank/konto. Velg en konto først.');return}
+  const due=nextDue(b), dueKey=due.toISOString().slice(0,10);
+  const already=(data.transactions||[]).some(t=>t.billId===b.id && t.billPaymentForDate===dueKey);
+  if(already){alert('Denne regningen er allerede registrert som betalt.');return}
+  const paidDate=new Date().toISOString().slice(0,10);
+  let rate=1,nokAmount=Number(b.amount||0);
+  if((b.currency||'NOK')!=='NOK'){
+    try{rate=await fetchNokRate(b.currency,paidDate);nokAmount=Math.round(Number(b.amount||0)*rate*100)/100}
+    catch(e){alert('Kunne ikke hente valutakurs for betalingen: '+e.message);return}
+  }
+  if(!confirm('Registrere «'+b.name+'» som betalt og legge betalingen inn som en utgift på '+accountLabel(b.accountId)+'?'))return;
+  tx.push({id:uid(),desc:b.name,amount:Number(b.amount||0),currency:b.currency||'NOK',rate,nokAmount,actualNok:nokAmount,type:'expense',cat:b.cat||'Regninger',accountId:b.accountId,date:paidDate,billId:b.id,billPaymentForDate:dueKey});
+  b.lastPaidForDate=dueKey;
+  b.lastPaidDate=paidDate;
+  save();
+  render();
+  if(typeof window.renderUpcomingBills==='function')window.renderUpcomingBills();
+}
+function billDateFromKey(key){
+  if(!key)return null;
+  const d=new Date(String(key)+'T12:00:00');
+  return isNaN(d.getTime())?null:d;
+}
+function advanceBillDate(d,frequency){
+  const out=new Date(d);
+  if(frequency==='yearly')out.setFullYear(out.getFullYear()+1);
+  else if(frequency==='quarterly')out.setMonth(out.getMonth()+3);
+  else out.setMonth(out.getMonth()+1);
+  return out;
+}
 function nextDue(b){
-  let now=new Date(), y=now.getFullYear(), m=now.getMonth(), d=Math.min(b.day,new Date(y,m+1,0).getDate());
-  let candidate=new Date(y,m,d);
-  if(candidate<new Date(y,m,now.getDate())){ if(b.frequency==='yearly') candidate=new Date(y+1,m,d); else if(b.frequency==='quarterly') candidate=new Date(y,m+3,Math.min(b.day,new Date(y,m+4,0).getDate())); else candidate=new Date(y,m+1,Math.min(b.day,new Date(y,m+2,0).getDate()));}
+  const now=new Date(); now.setHours(0,0,0,0);
+  if(b.lastPaidForDate){
+    const paidFor=billDateFromKey(b.lastPaidForDate);
+    if(paidFor){
+      let candidate=advanceBillDate(paidFor,b.frequency);
+      while(candidate<now)candidate=advanceBillDate(candidate,b.frequency);
+      return candidate;
+    }
+  }
+  let y=now.getFullYear(), m=now.getMonth(), d=Math.min(Number(b.day||1),new Date(y,m+1,0).getDate());
+  let candidate=new Date(y,m,d); candidate.setHours(0,0,0,0);
+  while(candidate<now)candidate=advanceBillDate(candidate,b.frequency);
   return candidate;
 }
 function billNokEstimate(b){
@@ -1206,7 +1264,7 @@ function renderBills(){
   billsList.innerHTML=bills.map(b=>{
     let n=nextDue(b);
     let freq=b.frequency==='yearly'?'Årlig':b.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
-    let billDisplay=b.currency&&b.currency!=='NOK'?fmtN(b.amount)+' '+b.currency+' · NOK-estimat '+kr(billNokEstimate(b)):kr(b.amount); return '<div class="row"><div class="rowtop"><b>📄 '+esc(b.name)+'</b><strong>'+billDisplay+'</strong></div><div class="muted">'+esc(b.cat)+' · '+esc(accountLabel(b.accountId))+' · '+freq+'</div><div style="margin-top:7px">Neste forfall: <b>'+n.toLocaleDateString('nb-NO')+'</b> <button class="secondary" style="float:right;padding:5px 8px" onclick="openBill(\''+b.id+'\')">✏️ Rediger</button> <button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteBill(\''+b.id+'\')">Slett</button></div></div>';
+    let billDisplay=b.currency&&b.currency!=='NOK'?fmtN(b.amount)+' '+b.currency+' · NOK-estimat '+kr(billNokEstimate(b)):kr(b.amount); return '<div class="row"><div class="rowtop"><b>📄 '+esc(b.name)+'</b><strong>'+billDisplay+'</strong></div><div class="muted">'+esc(b.cat)+' · '+esc(accountLabel(b.accountId))+' · '+freq+'</div><div style="margin-top:7px">Neste forfall: <b>'+n.toLocaleDateString('nb-NO')+'</b> <button class="primary" style="float:right;padding:5px 8px" onclick="recordBillPayment(\''+b.id+'\')">✅ Registrer betaling</button> <button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openBill(\''+b.id+'\')">✏️ Rediger</button> <button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteBill(\''+b.id+'\')">Slett</button></div></div>';
   }).join('')||'<div class="empty">Ingen faste regninger ennå.</div>';
   let list=bills.map(b=>({b,n:nextDue(b)})).sort((a,b)=>a.n-b.n).slice(0,8);
   upcoming.innerHTML=list.map(x=>'<div class="row"><div class="rowtop"><b>'+x.n.toLocaleDateString('nb-NO')+' · '+esc(x.b.name)+'</b><span>'+kr(x.b.amount)+'</span></div><small>'+esc(accountLabel(x.b.accountId))+'</small></div>').join('')||'<div class="empty">Ingen kommende betalinger.</div>';
@@ -1455,16 +1513,14 @@ function accountBalance(a){
 }
 
 function nextBillDate(b, from){
-  const d = new Date(from.getFullYear(), from.getMonth(), Math.min(Number(b.dueDay??b.day??1),28));
-  const freq = b.frequency || 'monthly';
-  while(d < from){
-    if(freq==='yearly') d.setFullYear(d.getFullYear()+1);
-    else if(freq==='quarterly') d.setMonth(d.getMonth()+3);
-    else d.setMonth(d.getMonth()+1);
+  const base=from instanceof Date?new Date(from):new Date(); base.setHours(0,0,0,0);
+  if(b.lastPaidForDate){
+    const paidFor=billDateFromKey(b.lastPaidForDate);
+    if(paidFor){let d=advanceBillDate(paidFor,b.frequency);while(d<base)d=advanceBillDate(d,b.frequency);return d;}
   }
-  return d;
+  let d=new Date(base.getFullYear(),base.getMonth(),Math.min(Number(b.dueDay??b.day??1),28)); d.setHours(0,0,0,0);
+  const freq=b.frequency||'monthly'; while(d<base)d=advanceBillDate(d,freq); return d;
 }
-
 function spendMonthTotals(){
   const now = new Date();
   const ym = now.toISOString().slice(0,7);
@@ -2449,6 +2505,8 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
+/* v65: recurring bill payment tracking */
+/* v64: collapsible Gjeld & formue sections */
 /* v63: responsive analysis + settings order + sync payload completeness */
 /* v61: shared financial calculations + mobile overview scrolling */
 /* v60d: mobile navigation dropdown with reliable iPhone scrolling */
@@ -2584,6 +2642,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
         '<div class="upcoming-bill-date">'+esc(date)+'</div>' +
         '<div class="upcoming-bill-name">'+esc(name)+'</div>' +
         '<div class="upcoming-bill-amount">'+esc(amount)+'</div>' +
+        '<button class="secondary upcoming-pay-btn" type="button" onclick="recordBillPayment(\''+esc(b.id)+'\')">Betalt</button>' +
       '</div>';
     }).join('');
   }
