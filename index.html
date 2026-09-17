@@ -34,13 +34,13 @@ label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,sele
 .currency-box{margin:8px 0 12px;padding:10px 12px;border:1px solid #d7dde5;border-radius:10px;background:#f7f8fa;font-size:.95rem}.currency-box strong{font-size:1.05rem}.dialog select,.dialog input{box-sizing:border-box}
 
 /* Mobile layout: prevent the whole page from becoming wider than the phone. */
-html,body{width:100%;max-width:100%;overflow-x:hidden}
+html,body{width:100%;max-width:100%;overflow-x:visible}
 *,*:before,*:after{box-sizing:border-box}
 /* Customizable overview */
 .overview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .overview-block{min-width:0}
 .overview-block.overview-hidden{display:none!important}
-.overview-details{margin-top:15px;background:white;border:1px solid #e4e7ed;border-radius:15px;overflow:hidden}
+.overview-details{margin-top:15px;background:white;border:1px solid #e4e7ed;border-radius:15px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .overview-details summary{list-style:none;cursor:pointer;padding:17px 18px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .overview-details summary::-webkit-details-marker{display:none}
 .overview-details summary:after{content:'▾';color:#687080;font-size:16px}
@@ -66,6 +66,8 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   .header-user{max-width:100%}
   .dashboard-grid,.quick-grid,.grid,.bankgrid,.data-model{width:100%;max-width:100%}
   .card,.quick-card,.bankcard{max-width:100%;min-width:0}
+  .overview-details{max-width:100%;}
+  .overview-details .overview-body{min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;}
   .calendar-controls,.break-row,.dash-row,.rowtop{max-width:100%;min-width:0;flex-wrap:wrap}
   .calendar-grid{width:100%;max-width:100%}
   .forecast-table{width:100%;max-width:100%;overflow-x:auto}
@@ -1306,7 +1308,9 @@ function readAmount(id){
 function readInteger(id){ return Math.trunc(readAmount(id)); }
 
 function renderDebt(){
-  const accountAssets = (data.accounts||[]).reduce((sum,a)=>sum + Number(a.startBalance??a.opening??0) + (data.transactions||[]).filter(t=>t.accountId===a.id).reduce((x,t)=>x + (t.type==='income'?Number(t.amount):t.type==='expense'?-Number(t.amount):0),0),0);
+  // Use the same account-balance calculation as the rest of the app.
+  // This keeps Oversikt, Gjeld & formue and transfers in sync.
+  const accountAssets = (data.accounts||[]).reduce((sum,a)=>sum + accountBalance(a),0);
   const otherAssets = (data.assets||[]).reduce((s,a)=>s+Number(a.value||0),0);
   const creditDebt = (data.creditCards||[]).reduce((s,c)=>s+Number(c.balance||0),0);
   const loanDebt = (data.loans||[]).reduce((s,l)=>s+Number(l.balance||0),0);
@@ -1384,12 +1388,20 @@ function deleteAsset(id){if(confirm('Slette denne eiendelen?')){data.assets=data
 
 
 function accountBalance(a){
-  return Number(a.startBalance??a.opening??0) +
-    (data.transactions||[]).filter(t=>t.accountId===a.id).reduce((sum,t)=>{
-      if(t.type==='income') return sum+Number(t.amount||0);
-      if(t.type==='expense') return sum-Number(t.amount||0);
-      return sum;
-    },0);
+  const opening=Number(a.startBalance??a.opening??0);
+  const txBalance=(data.transactions||[]).filter(t=>t.accountId===a.id).reduce((sum,t)=>{
+    const amount=moneyNok(t);
+    if(t.type==='income') return sum+amount;
+    if(t.type==='expense') return sum-amount;
+    return sum;
+  },0);
+  const transferBalance=(data.transfers||[]).reduce((sum,t)=>{
+    const amount=Number(t.amount||0);
+    if(t.from===a.id) return sum-amount;
+    if(t.to===a.id) return sum+amount;
+    return sum;
+  },0);
+  return opening+txBalance+transferBalance;
 }
 
 function nextBillDate(b, from){
@@ -1791,9 +1803,20 @@ function dashboardData(){
   const worth=balance+other-debt;
 
   const buffer=Number(data.spendSettings?.buffer||0);
-  const available=Math.max(0,balance-bills-buffer);
+  const budgetMap=data.budgets||{};
+  let budgetTotal=0, budgetUsed=0;
+  Object.entries(budgetMap).forEach(([cat,val])=>{
+    const amount=Number(val||0);
+    budgetTotal+=amount;
+    budgetUsed+=(data.transactions||[])
+      .filter(t=>t.type==='expense' && (t.category??t.cat)===cat && String(t.date||'').slice(0,7)===now.toISOString().slice(0,7))
+      .reduce((sum,t)=>sum+moneyNok(t),0);
+  });
+  const budgetLeft=budgetTotal?Math.max(0,budgetTotal-budgetUsed):null;
+  const cashAfterBills=Math.max(0,balance-bills-buffer);
+  const available=budgetLeft===null?cashAfterBills:Math.min(cashAfterBills,budgetLeft);
 
-  return {balance,bills,upcoming,debt,worth,buffer,available,credit,loans};
+  return {balance,bills,upcoming,debt,worth,buffer,available,credit,loans,budgetLeft};
 }
 
 function renderDashboard(){
@@ -2322,7 +2345,7 @@ function render(){
   renderSpend();
 fillSelects();renderBills();renderAnalytics();let ym=new Date().toISOString().slice(0,7),allMonth=tx.filter(x=>x.date.slice(0,7)===ym);fillFilters();let items=filteredItems(tx);
 let inc=allMonth.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),exp=allMonth.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0);
-month.textContent=new Date().toLocaleDateString('nb-NO',{month:'long',year:'numeric'});income.textContent=kr(inc);expense.textContent=kr(exp);balance.textContent=kr(inc-exp);el('overviewAccountBalance').textContent=kr(accounts.reduce((s,a)=>s+acctBalance(a),0));
+month.textContent=new Date().toLocaleDateString('nb-NO',{month:'long',year:'numeric'});income.textContent=kr(inc);expense.textContent=kr(exp);balance.textContent=kr(inc-exp);el('overviewAccountBalance').textContent=kr(accounts.reduce((s,a)=>s+accountBalance(a),0));
 accountSummary.innerHTML=accounts.map(a=>'<div class="row"><div class="rowtop"><b>'+esc(a.bank)+' – '+esc(a.name)+'</b><strong>'+kr(acctBalance(a))+'</strong></div></div>').join('')||'<div class="empty">Ingen kontoer ennå.</div>';
 accountsList.innerHTML=accounts.map(a=>'<div class="bankcard"><h3>'+esc(a.bank)+'</h3><div class="muted">'+esc(a.name)+'</div><div class="value">'+kr(acctBalance(a))+'</div><small>Startsaldo: '+kr(a.opening)+'</small><p><button class="secondary" onclick="openAccount(\''+a.id+'\')">✏️ Rediger</button> <button class="danger" onclick="deleteAccount(\''+a.id+'\')">Slett</button></p></div>').join('')||'<div class="empty">Legg til din første konto.</div>';
 transfersList.innerHTML=transfers.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(t=>'<div class="row"><b>'+new Date(t.date+'T12:00:00').toLocaleDateString('nb-NO')+'</b> · '+esc(accountLabel(t.from))+' → '+esc(accountLabel(t.to))+' · '+kr(t.amount)+'<div class="muted">'+esc(t.desc)+'</div></div>').join('')||'<div class="empty">Ingen overføringer ennå.</div>';
@@ -2372,6 +2395,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
+/* v61: shared financial calculations + mobile overview scrolling */
 /* v60d: mobile navigation dropdown with reliable iPhone scrolling */
 (function(){
   function initMobileNavigation(){
