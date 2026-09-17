@@ -212,6 +212,11 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
   }
 }
 
+
+/* Reordering controls belong inside the Tilpass modal. Normal pages should match Oversikt. */
+.reorderable-section > summary .reorder-handle,
+.reorderable-section > summary .reorder-actions,
+.reorder-hint { display:none !important; }
 </style>
 
 <style>
@@ -449,7 +454,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 
 <main>
 <div id="overview">
-<div class="overview-toolbar"><div><h1 style="margin-bottom:4px">Oversikt</h1><p class="muted" id="month"></p></div><button class="secondary" type="button" onclick="openOverviewCustomize()">⚙️ Tilpass oversikt</button></div>
+<div class="overview-toolbar"><div><h1 style="margin-bottom:4px">Oversikt</h1><p class="muted" id="month"></p></div></div>
 <div id="overviewBlocks">
 <details class="overview-details overview-block" data-overview-key="upcomingBills" open>
   <summary>📅 Kommende regninger</summary>
@@ -489,6 +494,7 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 <summary>✨ Hurtigstart</summary>
 <div class="overview-body"><div class="card" style="margin-top:0"><p class="muted">Legg raskt til det du trenger.</p><div class="actions2"><button onclick="openTx()">+ Legg til transaksjon</button><button class="secondary" onclick="show('accounts',document.querySelectorAll('.tab')[2])">🏦 Konto</button><button class="secondary" onclick="show('budget',document.querySelectorAll('.tab')[3])">📊 Budsjett</button><button class="secondary" onclick="show('savings',document.querySelectorAll('.tab')[4])">🎯 Sparemål</button></div></div></div></details>
 </div>
+<div class="page-customize-link"><button type="button" class="secondary" onclick="openOverviewCustomize()">⚙️ Tilpass oversikt</button></div>
 </div>
 
 <div id="transactions" class="hide">
@@ -526,11 +532,9 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 <div id="bills" class="hide">
 <h1>📅 Faste regninger</h1>
 <p class="muted">Legg inn regninger som kommer igjen, og få oversikt over neste forfall.</p>
-<p class="reorder-hint">↕️ Dra boksene for å endre rekkefølgen, eller bruk ↑ ↓.</p>
-
 <div id="billSections">
-  <details class="overview-details reorderable-section" data-reorder-key="myBills" draggable="true" open>
-    <summary>📋 Mine regninger <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Mine regninger opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Mine regninger ned">↓</button></span></summary>
+  <details class="overview-details reorderable-section" data-reorder-key="myBills" draggable="false" open>
+    <summary>📋 Mine regninger</summary>
     <div class="overview-body">
       <div class="card" style="margin:0">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Mine regninger</h2><button onclick="openBill()">+ Ny regning</button></div>
@@ -539,14 +543,15 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details reorderable-section" data-reorder-key="upcomingPayments" draggable="true" open>
-    <summary>💰 Kommende betalinger <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Kommende betalinger opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Kommende betalinger ned">↓</button></span></summary>
+  <details class="overview-details reorderable-section" data-reorder-key="upcomingPayments" draggable="false" open>
+    <summary>💰 Kommende betalinger</summary>
     <div class="overview-body">
       <div class="card" style="margin:0"><div id="upcoming"></div></div>
     </div>
   </details>
 </div>
-<div class="page-customize-link"><button type="button" class="secondary" onclick="openReorderCustomize('bills')">⚙️ Tilpass regninger</button></div>
+<div class="page-customize-link" style="margin-top:28px"><button type="button" class="secondary" onclick="openReorderCustomize('bills')">⚙️ Tilpass regninger</button></div>
+<div style="height:80px"></div>
 </div>
 <section id="tab-debt" class="tab-panel hide">
   <div class="section-head">
@@ -563,9 +568,9 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     <div class="card"><div class="label">Kredittkort brukt</div><div class="big" id="creditUsed">0 %</div></div>
   </div>
 
-  <p class="reorder-hint">↕️ Dra boksene for å endre rekkefølgen, eller bruk ↑ ↓.</p>
-  <details class="overview-details debt-details reorderable-section" data-reorder-key="creditCards" draggable="true">
-    <summary>💳 Kredittkort <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Kredittkort opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Kredittkort ned">↓</button></span></summary>
+  <div id="debtSections">
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="creditCards" draggable="false">
+    <summary>💳 Kredittkort</summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <form id="creditForm" class="form-grid">
@@ -582,8 +587,8 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details debt-details reorderable-section" data-reorder-key="creditPurchases" draggable="true">
-    <summary>🛍️ Kjøpskreditt <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Kjøpskreditt opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Kjøpskreditt ned">↓</button></span></summary>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="creditPurchases" draggable="false">
+    <summary>🛍️ Kjøpskreditt</summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <p class="muted">Kreditt knyttet til kjøp, for eksempel Klarna, Walley, Qliro eller Svea.</p>
@@ -604,8 +609,8 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details debt-details reorderable-section" data-reorder-key="loans" draggable="true">
-    <summary>🏦 Lån <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Lån opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Lån ned">↓</button></span></summary>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="loans" draggable="false">
+    <summary>🏦 Lån</summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <form id="loanForm" class="form-grid">
@@ -624,8 +629,8 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details debt-details reorderable-section" data-reorder-key="assets" draggable="true">
-    <summary>🏠 Andre eiendeler <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Andre eiendeler opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Andre eiendeler ned">↓</button></span></summary>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="assets" draggable="false">
+    <summary>🏠 Andre eiendeler</summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <p class="muted">Bankkontoene dine regnes allerede som eiendeler. Her kan du legge til f.eks. bolig, bil, fond eller andre verdier uten å telle bankkontoene dobbelt.</p>
@@ -640,7 +645,9 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
       </div>
     </div>
   </details>
-  <div class="page-customize-link"><button type="button" class="secondary" onclick="openReorderCustomize('debt')">⚙️ Tilpass gjeld &amp; formue</button></div>
+  </div>
+  <div class="page-customize-link" style="margin-top:28px"><button type="button" class="secondary" onclick="openReorderCustomize('debt')">⚙️ Tilpass gjeld &amp; formue</button></div>
+  <div style="height:80px"></div>
 </section>
 
 
@@ -2636,7 +2643,7 @@ function bindReorderCustomize(){
     const item=btn.closest('.reorder-customize-item'),kind=list.dataset.kind,arr=kind==='debt'?debtOrder:billOrder;
     const i=arr.indexOf(item.dataset.key),j=i+Number(btn.dataset.delta);if(i<0||j<0||j>=arr.length)return;
     [arr[i],arr[j]]=[arr[j],arr[i]];saveReorderPrefs(kind,arr);
-    if(kind==='debt')applyReorder('debt','tab-debt');else applyReorder('bills','billSections');
+    if(kind==='debt')applyReorder('debt','debtSections');else applyReorder('bills','billSections');
     openReorderCustomize(kind);
   });
   let drag=null;
@@ -2650,13 +2657,13 @@ function bindReorderCustomize(){
     if(from<to)item.after(drag);else item.before(drag);
     const next=[...list.querySelectorAll('.reorder-customize-item')].map(x=>x.dataset.key);
     if(kind==='debt')debtOrder=next;else billOrder=next;saveReorderPrefs(kind,next);
-    if(kind==='debt')applyReorder('debt','tab-debt');else applyReorder('bills','billSections');
+    if(kind==='debt')applyReorder('debt','debtSections');else applyReorder('bills','billSections');
   });
 }
 
 function render(){
   applyOverviewLayout();
-  applyReorder('debt','tab-debt');
+  applyReorder('debt','debtSections');
   applyReorder('bills','billSections');
   renderMobilePreview();
   renderDashboard();
@@ -2717,7 +2724,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
-/* v68: future currency transactions can be saved without a future official rate */
+/* v69: consistent bottom placement for page customization links */
 /* v67: customization links at bottom of reorderable pages */
 /* v66: reorderable Gjeld & formue + Faste regninger sections */
 /* v65: recurring bill payment tracking */
