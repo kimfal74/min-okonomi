@@ -549,6 +549,20 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
       <div class="card" style="margin:0"><div id="upcoming"></div></div>
     </div>
   </details>
+
+  <details class="overview-details" open>
+    <summary>📱 Abonnementer</summary>
+    <div class="overview-body">
+      <div class="card" style="margin:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2 style="margin:0">Abonnementer</h2><p class="muted" style="margin:4px 0 0">Få oversikt over abonnementene dine og hva de koster per måned og år.</p></div><button onclick="openSubscription()">+ Nytt abonnement</button></div>
+        <div class="dashboard-grid" style="margin-top:14px">
+          <div class="card"><div class="muted">Per måned</div><div class="value expense" id="subscriptionMonthlyTotal">0 kr</div></div>
+          <div class="card"><div class="muted">Per år</div><div class="value expense" id="subscriptionYearlyTotal">0 kr</div></div>
+        </div>
+        <div id="subscriptionsList" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </details>
 </div>
 <div class="page-customize-link" style="margin-top:28px"><button type="button" class="secondary" onclick="openReorderCustomize('bills')">⚙️ Tilpass regninger</button></div>
 <div style="height:80px"></div>
@@ -949,6 +963,18 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 
 <div class="modal" id="reorderCustomizeModal"><div class="dialog"><h2 id="reorderCustomizeTitle">⚙️ Tilpass</h2><p class="muted">Dra boksene i ønsket rekkefølge, eller bruk pilene på mobilen.</p><div id="reorderCustomizeList" class="reorder-customize-list"></div><div class="actions2"><button class="secondary" type="button" onclick="closeM('reorderCustomizeModal')">Ferdig</button></div></div></div>
 <div class="modal" id="overviewCustomizeModal"><div class="dialog"><h2>⚙️ Tilpass oversikt</h2><p class="muted">Dra bolkene i ønsket rekkefølge, eller bruk pilene på mobilen. Du kan også skjule bolker du ikke trenger.</p><div id="overviewCustomizeList" class="overview-customize-list"></div><div class="actions2"><button class="secondary" type="button" onclick="closeM('overviewCustomizeModal')">Ferdig</button></div></div></div>
+<div class="modal" id="subscriptionModal"><div class="dialog"><h2 id="subscriptionTitle">Nytt abonnement</h2>
+<form onsubmit="saveSubscription(event)"><input id="subscriptionId" type="hidden">
+<label>Navn</label><input id="subscriptionName" required placeholder="F.eks. Netflix">
+<label>Beløp</label><input id="subscriptionAmount" type="number" min="0.01" step=".01" required placeholder="179">
+<label>Valuta</label><select id="subscriptionCurrency"><option>NOK</option><option>EUR</option><option>USD</option><option>GBP</option><option>SEK</option><option>DKK</option><option>CHF</option></select>
+<label>Intervall</label><select id="subscriptionFrequency"><option value="monthly">Månedlig</option><option value="quarterly">Hver 3. måned</option><option value="semiannual">Hver 6. måned</option><option value="yearly">Årlig</option></select>
+<label>Neste trekk</label><input id="subscriptionNextDate" type="date" required>
+<label>Kategori</label><select id="subscriptionCat"></select>
+<label>Belastes konto</label><select id="subscriptionAccount"></select>
+<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="subscriptionActive" type="checkbox" checked style="width:auto"> Aktivt abonnement</label>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('subscriptionModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
+
 <div class="modal" id="billModal"><div class="dialog"><h2 id="billTitle">Ny fast regning</h2>
 <form onsubmit="saveBill(event)"><input id="billId" type="hidden">
 <label>Navn</label><input id="billName" required placeholder="F.eks. Strøm">
@@ -974,6 +1000,15 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 <div id="csvPreview" class="muted" style="margin-top:10px"></div>
 <div class="actions2"><button type="button" class="secondary" onclick="closeM('importModal')">Avbryt</button><button onclick="finishCSV()">Importer</button></div>
 </div></div>
+
+<div class="modal" id="paymentEditModal"><div class="dialog"><h2 id="paymentEditTitle">✏️ Rediger betaling</h2>
+<p id="paymentEditInfo" class="muted"></p>
+<form onsubmit="savePaymentEdit(event)"><input id="paymentEditId" type="hidden">
+<label>Beløp<input id="paymentEditAmount" inputmode="decimal" min="0.01" step="0.01" required></label>
+<label>Fra konto<select id="paymentEditAccount" required></select></label>
+<label>Betalingsdato<input id="paymentEditDate" type="date" required></label>
+<div class="actions2"><button type="button" class="secondary" onclick="closeM('paymentEditModal')">Avbryt</button><button>💾 Lagre endring</button></div>
+</form></div></div>
 
 <div class="modal" id="creditPaymentModal"><div class="dialog"><h2>💳 Registrer betaling</h2>
 <p id="creditPaymentInfo" class="muted"></p>
@@ -1022,13 +1057,13 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 <div class="actions2"><button type="button" class="secondary" onclick="closeM('savingModal')">Avbryt</button><button>Lagre</button></div></form></div></div>
 
 <script>
-const K={tx:'mo3_tx',cat:'mo3_cat',acc:'mo3_acc',bud:'mo3_bud',goal:'mo3_goal',transfer:'mo3_transfer',bill:'mo4_bill'};
+const K={tx:'mo3_tx',cat:'mo3_cat',acc:'mo3_acc',bud:'mo3_bud',goal:'mo3_goal',transfer:'mo3_transfer',bill:'mo4_bill',subscription:'mo8_subscriptions'};
 let tx=JSON.parse(localStorage.getItem(K.tx)||'[]');
 let cats=JSON.parse(localStorage.getItem(K.cat)||'["Bolig","Mat","Transport","Helse","Hobby","Shopping","Regninger","Lønn","Annet"]');
 let accounts=JSON.parse(localStorage.getItem(K.acc)||'[]');
 let bud=JSON.parse(localStorage.getItem(K.bud)||'[]');
 let goals=JSON.parse(localStorage.getItem(K.goal)||'[]');
-let transfers=JSON.parse(localStorage.getItem(K.transfer)||'[]');let bills=JSON.parse(localStorage.getItem(K.bill)||'[]');
+let transfers=JSON.parse(localStorage.getItem(K.transfer)||'[]');let bills=JSON.parse(localStorage.getItem(K.bill)||'[]');let subscriptions=JSON.parse(localStorage.getItem(K.subscription)||'[]');
 
 function readExtraData(){
   try{
@@ -1036,12 +1071,13 @@ function readExtraData(){
     return {
       creditCards:Array.isArray(saved.creditCards)?saved.creditCards:[],
       creditPurchases:Array.isArray(saved.creditPurchases)?saved.creditPurchases:[],
+      subscriptions:Array.isArray(saved.subscriptions)?saved.subscriptions:[],
       loans:Array.isArray(saved.loans)?saved.loans:[],
       assets:Array.isArray(saved.assets)?saved.assets:[],
       spendSettings:(saved.spendSettings&&typeof saved.spendSettings==='object')?saved.spendSettings:{buffer:0}
     };
   }catch(e){
-    return {creditCards:[],creditPurchases:[],loans:[],assets:[],spendSettings:{buffer:0}};
+    return {creditCards:[],creditPurchases:[],subscriptions:[],loans:[],assets:[],spendSettings:{buffer:0}};
   }
 }
 const extraData=readExtraData();
@@ -1068,6 +1104,7 @@ function uid(){
 const data={
   creditCards:extraData.creditCards,
   creditPurchases:extraData.creditPurchases,
+  subscriptions:extraData.subscriptions,
   loans:extraData.loans,
   assets:extraData.assets,
   spendSettings:extraData.spendSettings
@@ -1077,6 +1114,7 @@ Object.defineProperties(data,{
   accounts:{enumerable:true,get:()=>accounts},
   goals:{enumerable:true,get:()=>goals},
   bills:{enumerable:true,get:()=>bills},
+  subscriptions:{enumerable:true,get:()=>subscriptions},
   budgets:{enumerable:true,get:()=>Object.fromEntries(bud.map(b=>[b.cat,Number(b.amount||0)]))}
 });
 
@@ -1085,6 +1123,7 @@ function save(){
   localStorage.setItem('mo7_data',JSON.stringify({
     creditCards:data.creditCards||[],
     creditPurchases:data.creditPurchases||[],
+    subscriptions:data.subscriptions||[],
     loans:data.loans||[],
     assets:data.assets||[],
     spendSettings:data.spendSettings||{buffer:0}
@@ -1093,7 +1132,7 @@ function save(){
 
 const kr=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills)); if(!window.__restoringCloud) markLocalDirty();};
+const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills));localStorage.setItem(K.subscription,JSON.stringify(subscriptions)); if(!window.__restoringCloud) markLocalDirty();};
 function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');closeMore();if(id==='analytics')requestAnimationFrame(()=>renderAnalytics())}
 function accountLabel(id){let a=accounts.find(x=>x.id===id);return a?a.bank+' – '+a.name:'Ikke valgt'}
 function fillSelects(){
@@ -1182,7 +1221,7 @@ async function updateCurrencyUI(){
   try{const rate=await fetchNokRate(c,d);const calc=a?Math.round(a*rate*100)/100:0;info.innerHTML=(isFuture?'<strong>1 '+c+' ≈ '+fmtN(rate)+' NOK</strong> · <span class="muted">foreløpig kurs</span>':'<strong>1 '+c+' = '+fmtN(rate)+' NOK</strong>')+(a?' · <strong>'+fmtN(calc)+' NOK</strong> beregnet':'');}
   catch(e){info.textContent=isFuture?'ℹ️ Fremtidig transaksjon kan lagres uten valutakurs. Fyll inn faktisk belastet NOK hvis du kjenner beløpet.':'⚠️ '+e.message;}
 }
-function openTx(id){fillSelects();txTitle.textContent=id?'Rediger transaksjon':'Ny transaksjon';let x=tx.find(a=>a.id===id);txId.value=id||'';desc.value=x?.desc||'';amount.value=x?.amount??'';currency.value=x?.currency||'NOK';actualNok.value=x?.actualNok??'';type.value=x?.type||'expense';date.value=x?.date||new Date().toISOString().slice(0,10);if(x){cat.value=x.cat;txAccount.value=x.accountId||''}updateCurrencyUI();openM('txModal')}
+function openTx(id){if(id){const linked=tx.find(a=>a.id===id);if(linked?.billId||linked?.source==='billPayment'||linked?.source==='creditPayment'||linked?.source==='subscriptionPayment'){openPaymentEdit(id);return}if(linked?.source==='creditPurchase'){alert('Denne transaksjonen hører til en kjøpskreditt. Rediger kjøpskreditten under Gjeld & formue.');return;}}fillSelects();txTitle.textContent=id?'Rediger transaksjon':'Ny transaksjon';let x=tx.find(a=>a.id===id);txId.value=id||'';desc.value=x?.desc||'';amount.value=x?.amount??'';currency.value=x?.currency||'NOK';actualNok.value=x?.actualNok??'';type.value=x?.type||'expense';date.value=x?.date||new Date().toISOString().slice(0,10);if(x){cat.value=x.cat;txAccount.value=x.accountId||''}updateCurrencyUI();openM('txModal')}
 async function saveTx(e){
   e.preventDefault();
   const txAccountEl=document.getElementById('txAccount');
@@ -1233,7 +1272,7 @@ function openBudget(){fillSelects();openM('budgetModal')}
 function saveBudget(e){e.preventDefault();let c=budgetCat.value,a=+budgetAmount.value,o=bud.find(x=>x.cat===c);if(o)o.amount=a;else bud.push({cat:c,amount:a});persist();closeM('budgetModal');e.target.reset();render()}
 function openSaving(){openM('savingModal')}
 function saveGoal(e){e.preventDefault();goals.push({name:goalName.value.trim(),target:+goalTarget.value,current:+goalCurrent.value});persist();closeM('savingModal');e.target.reset();render()}
-function removeTx(id){if(confirm('Slette denne transaksjonen?')){tx=tx.filter(x=>x.id!==id);persist();render()}}
+function removeTx(id){const linked=tx.find(x=>x.id===id);if(linked?.billId||linked?.source==='billPayment'||linked?.source==='creditPayment'||linked?.source==='subscriptionPayment'){deleteLinkedPayment(id);return}if(linked?.source==='creditPurchase'){alert('Denne transaksjonen hører til en kjøpskreditt og kan ikke slettes separat. Slett kjøpskreditten under Gjeld & formue.');return}if(confirm('Slette denne transaksjonen?')){tx=tx.filter(x=>x.id!==id);persist();render()}}
 function clearAll(){if(confirm('Slette alle transaksjoner?')){tx=[];persist();render()}}
 function delBud(i){bud.splice(i,1);persist();render()}function delGoal(i){goals.splice(i,1);persist();render()}
 function addGoal(i){let n=prompt('Hvor mye vil du legge til?','500');if(n!==null&&!isNaN(n)){goals[i].current+=+n;persist();render()}}
@@ -1287,7 +1326,7 @@ function saveBill(e){
   if(id)bills=bills.map(x=>x.id===id?b:x);else bills.push(b);
   persist();closeM('billModal');e.target.reset();render();
 }
-function deleteBill(id){if(confirm('Slette denne faste regningen?')){bills=bills.filter(x=>x.id!==id);persist();render()}}
+function deleteBill(id){if(confirm('Slette denne faste regningen? Registrerte betalinger knyttet til regningen slettes også.')){tx=tx.filter(t=>t.billId!==id);bills=bills.filter(x=>x.id!==id);persist();render()}}
 async function recordBillPayment(id){
   const b=bills.find(x=>x.id===id);
   if(!b)return;
@@ -1302,13 +1341,101 @@ async function recordBillPayment(id){
     catch(e){alert('Kunne ikke hente valutakurs for betalingen: '+e.message);return}
   }
   if(!confirm('Registrere «'+b.name+'» som betalt og legge betalingen inn som en utgift på '+accountLabel(b.accountId)+'?'))return;
-  tx.push({id:uid(),desc:b.name,amount:Number(b.amount||0),currency:b.currency||'NOK',rate,nokAmount,actualNok:nokAmount,type:'expense',cat:b.cat||'Regninger',accountId:b.accountId,date:paidDate,billId:b.id,billPaymentForDate:dueKey});
+  tx.push({id:uid(),desc:b.name,amount:Number(b.amount||0),currency:b.currency||'NOK',rate,nokAmount,actualNok:nokAmount,type:'expense',cat:b.cat||'Regninger',accountId:b.accountId,date:paidDate,billId:b.id,billPaymentForDate:dueKey,source:'billPayment'});
   b.lastPaidForDate=dueKey;
   b.lastPaidDate=paidDate;
   save();
   render();
   if(typeof window.renderUpcomingBills==='function')window.renderUpcomingBills();
 }
+function billPaymentTransactions(billId){
+  return tx.filter(t=>t.billId===billId && (t.source==='billPayment' || t.billPaymentForDate));
+}
+function refreshBillPaymentState(billId){
+  const b=bills.find(x=>x.id===billId); if(!b)return;
+  const pays=billPaymentTransactions(billId).slice().sort((a,z)=>String(a.billPaymentForDate||'').localeCompare(String(z.billPaymentForDate||'')) || String(a.date||'').localeCompare(String(z.date||'')));
+  const last=pays[pays.length-1];
+  b.lastPaidForDate=last?.billPaymentForDate||'';
+  b.lastPaidDate=last?.date||'';
+}
+function openPaymentEdit(id){
+  const p=tx.find(x=>x.id===id); if(!p)return;
+  const accounts=data.accounts||[];
+  if(!accounts.length){alert('Du trenger en konto før du kan redigere en betaling.');return;}
+  el('paymentEditId').value=id;
+  const isBill=!!p.billId;
+  const isSubscription=p.source==='subscriptionPayment'||!!p.subscriptionId;
+  const c=(!isBill&&!isSubscription)?data.creditPurchases.find(x=>x.id===p.creditPurchaseId):null;
+  const b=isBill?bills.find(x=>x.id===p.billId):null;
+  const sub=isSubscription?subscriptions.find(x=>x.id===p.subscriptionId):null;
+  el('paymentEditTitle').textContent=isBill?'🧾 Rediger regningsbetaling':isSubscription?'📱 Rediger abonnementbetaling':'💳 Rediger kjøpskredittbetaling';
+  el('paymentEditInfo').textContent=isBill?(b?`${b.name} · Forfallsdato: ${new Date((p.billPaymentForDate||'')+'T12:00:00').toLocaleDateString('nb-NO')}`:'Regningsbetaling'):isSubscription?(sub?`${sub.name} · Neste trekk: ${new Date((sub.nextDate||'')+'T12:00:00').toLocaleDateString('nb-NO')}`:'Abonnementbetaling'):(c?`${c.provider||'Andre'} · ${c.name} · Utestående: ${fmtN(c.balance)} kr`:'Kjøpskredittbetaling');
+  el('paymentEditAmount').value=p.amount??'';
+  el('paymentEditAccount').innerHTML=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('');
+  el('paymentEditAccount').value=p.accountId||'';
+  el('paymentEditDate').value=p.date||new Date().toISOString().slice(0,10);
+  openM('paymentEditModal');
+}
+function savePaymentEdit(e){
+  e.preventDefault();
+  const id=el('paymentEditId').value, p=tx.find(x=>x.id===id); if(!p)return;
+  const amount=readAmount('paymentEditAmount');
+  if(!(amount>0)){alert('Skriv inn et beløp større enn 0.');return}
+  const accountId=el('paymentEditAccount').value;
+  if(!accountId){alert('Velg konto for betalingen.');return}
+  const date=el('paymentEditDate').value;
+  if(!date){alert('Velg en betalingsdato.');return}
+  if(p.creditPurchaseId){
+    const c=data.creditPurchases.find(x=>x.id===p.creditPurchaseId); if(!c)return;
+    const otherPaid=tx.filter(x=>x.source==='creditPayment'&&x.creditPurchaseId===c.id&&x.id!==p.id).reduce((sum,x)=>sum+Number(x.amount||0),0);
+    const original=Number(c.original||0);
+    if(original>0 && otherPaid+amount>original+0.000001){alert('Betalingene kan ikke være større enn opprinnelig kjøpsbeløp.');return}
+    p.amount=amount;p.nokAmount=amount;p.actualNok=null;p.accountId=accountId;p.date=date;p.type='expense';p.source='creditPayment';
+    const paidTotal=otherPaid+amount;
+    c.balance=Math.max(0,original-paidTotal);
+    if(c.balance===0){c.payment=0;c.dueDate='';}else if(c.payment>0){c.payment=Math.min(c.payment,c.balance);}
+  }else if(p.billId){
+    const b=bills.find(x=>x.id===p.billId); if(!b)return;
+    p.amount=amount;
+    if((p.currency||'NOK')==='NOK'){p.rate=1;p.nokAmount=amount;p.actualNok=amount;}
+    else {p.actualNok=null;}
+    p.accountId=accountId;p.date=date;p.type='expense';p.source='billPayment';
+    refreshBillPaymentState(b.id);
+  }else if(p.subscriptionId){
+    const sub=subscriptions.find(x=>x.id===p.subscriptionId); if(!sub)return;
+    p.amount=amount;
+    if((p.currency||'NOK')==='NOK'){p.rate=1;p.nokAmount=amount;p.actualNok=amount;}
+    else {p.actualNok=null;}
+    p.accountId=accountId;p.date=date;p.type='expense';p.source='subscriptionPayment';
+  }
+  save();closeM('paymentEditModal');e.target.reset();render();
+  if(typeof window.renderUpcomingBills==='function')window.renderUpcomingBills();
+}
+function deleteLinkedPayment(id){
+  const p=tx.find(x=>x.id===id); if(!p)return;
+  const label=p.billId?'regningsbetalingen':p.subscriptionId?'abonnementbetalingen':'kjøpskredittbetalingen';
+  if(!confirm('Slette denne '+label+'? Beløpet blir ført tilbake i kontoens saldo og koblingen oppdateres.'))return;
+  const billId=p.billId, creditId=p.creditPurchaseId, subscriptionId=p.subscriptionId;
+  const subscriptionPreviousNextDate=p.subscriptionPreviousNextDate||'';
+  tx=tx.filter(x=>x.id!==id);
+  if(billId)refreshBillPaymentState(billId);
+  if(subscriptionId){
+    const sub=subscriptions.find(x=>x.id===subscriptionId);
+    if(sub && subscriptionPreviousNextDate)sub.nextDate=subscriptionPreviousNextDate;
+  }
+  if(creditId){
+    const c=data.creditPurchases.find(x=>x.id===creditId);
+    if(c){
+      const paid=tx.filter(x=>x.source==='creditPayment'&&x.creditPurchaseId===creditId).reduce((sum,x)=>sum+Number(x.amount||0),0);
+      const original=Number(c.original||0);
+      if(original>0)c.balance=Math.max(0,original-paid);
+      if(c.balance===0){c.payment=0;c.dueDate='';}else if(c.payment>0)c.payment=Math.min(c.payment,c.balance);
+    }
+  }
+  save();render();
+  if(typeof window.renderUpcomingBills==='function')window.renderUpcomingBills();
+}
+
 function billDateFromKey(key){
   if(!key)return null;
   const d=new Date(String(key)+'T12:00:00');
@@ -1317,6 +1444,7 @@ function billDateFromKey(key){
 function advanceBillDate(d,frequency){
   const out=new Date(d);
   if(frequency==='yearly')out.setFullYear(out.getFullYear()+1);
+  else if(frequency==='semiannual')out.setMonth(out.getMonth()+6);
   else if(frequency==='quarterly')out.setMonth(out.getMonth()+3);
   else out.setMonth(out.getMonth()+1);
   return out;
@@ -1341,15 +1469,106 @@ function billNokEstimate(b){
   const cached=localStorage.getItem(rateKey(c,new Date().toISOString().slice(0,10)));
   return cached?Math.round(Number(b.amount)*Number(cached)*100)/100:Number(b.amount)||0;
 }
+function subscriptionMonthlyAmount(s){
+  const a=billNokEstimate(s);
+  if(s.frequency==='yearly')return a/12;
+  if(s.frequency==='semiannual')return a/6;
+  if(s.frequency==='quarterly')return a/3;
+  return a;
+}
+function subscriptionNextDate(s){
+  const d=new Date((s.nextDate||'')+'T12:00:00');
+  return isNaN(d.getTime())?null:d;
+}
+function advanceSubscriptionDate(d,frequency){
+  const out=new Date(d);
+  if(frequency==='yearly')out.setFullYear(out.getFullYear()+1);
+  else if(frequency==='semiannual')out.setMonth(out.getMonth()+6);
+  else if(frequency==='quarterly')out.setMonth(out.getMonth()+3);
+  else out.setMonth(out.getMonth()+1);
+  return out;
+}
+function fillSubscriptionSelects(){
+  const catEl=document.getElementById('subscriptionCat'), accEl=document.getElementById('subscriptionAccount');
+  if(catEl)catEl.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('');
+  if(accEl)accEl.innerHTML=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('')||'<option value="">Opprett en konto først</option>';
+}
+function openSubscription(id){
+  fillSubscriptionSelects();
+  const s=subscriptions.find(x=>x.id===id);
+  document.getElementById('subscriptionTitle').textContent=s?'Rediger abonnement':'Nytt abonnement';
+  document.getElementById('subscriptionId').value=id||'';
+  document.getElementById('subscriptionName').value=s?.name||'';
+  document.getElementById('subscriptionAmount').value=s?.amount??'';
+  document.getElementById('subscriptionCurrency').value=s?.currency||'NOK';
+  document.getElementById('subscriptionFrequency').value=s?.frequency||'monthly';
+  document.getElementById('subscriptionNextDate').value=s?.nextDate||new Date().toISOString().slice(0,10);
+  document.getElementById('subscriptionCat').value=s?.cat||cats[0]||'Annet';
+  document.getElementById('subscriptionAccount').value=s?.accountId||accounts[0]?.id||'';
+  document.getElementById('subscriptionActive').checked=s?.active!==false;
+  openM('subscriptionModal');
+}
+function saveSubscription(e){
+  e.preventDefault();
+  const accountId=document.getElementById('subscriptionAccount').value;
+  if(!accountId){alert('Velg en bank/konto først.');return}
+  const amount=parseMoneyValue(document.getElementById('subscriptionAmount').value);
+  if(!(amount>0)){alert('Skriv inn et beløp større enn 0.');return}
+  const id=document.getElementById('subscriptionId').value;
+  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency:document.getElementById('subscriptionCurrency').value||'NOK',frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked};
+  if(id){subscriptions=subscriptions.map(x=>x.id===id?obj:x)}else subscriptions.push(obj);
+  persist();save();closeM('subscriptionModal');e.target.reset();render();
+}
+function deleteSubscription(id){
+  const s=subscriptions.find(x=>x.id===id);if(!s)return;
+  if(!confirm('Slette abonnementet «'+s.name+'»? Dette sletter ikke eventuelle betalinger som allerede er registrert som vanlige transaksjoner.'))return;
+  subscriptions=subscriptions.filter(x=>x.id!==id);persist();save();render();
+}
+async function recordSubscriptionPayment(id){
+  const s=subscriptions.find(x=>x.id===id);if(!s||s.active===false)return;
+  if(!s.accountId){alert('Dette abonnementet har ingen bank/konto. Velg en konto først.');return}
+  const amount=Number(s.amount||0), paidDate=new Date().toISOString().slice(0,10);
+  let rate=1,nokAmount=amount;
+  if((s.currency||'NOK')!=='NOK'){
+    try{rate=await fetchNokRate(s.currency,paidDate);nokAmount=Math.round(amount*rate*100)/100}catch(e){alert('Kunne ikke hente valutakurs for betalingen: '+e.message);return}
+  }
+  if(!confirm('Registrere «'+s.name+'» som betalt og legge betalingen inn som en utgift på '+accountLabel(s.accountId)+'?'))return;
+  const previousNextDate=s.nextDate||paidDate;
+  tx.push({id:uid(),desc:s.name,amount,currency:s.currency||'NOK',rate,nokAmount,actualNok:nokAmount,type:'expense',cat:s.cat||'Annet',accountId:s.accountId,date:paidDate,subscriptionId:s.id,subscriptionPaymentForDate:previousNextDate,subscriptionPreviousNextDate:previousNextDate,source:'subscriptionPayment'});
+  const next=subscriptionNextDate(s)||new Date();
+  let nextDate=advanceSubscriptionDate(next,s.frequency);while(nextDate<new Date(new Date().setHours(0,0,0,0)))nextDate=advanceSubscriptionDate(nextDate,s.frequency);
+  s.nextDate=nextDate.toISOString().slice(0,10);
+  save();render();
+}
+function renderSubscriptions(){
+  const list=document.getElementById('subscriptionsList'),monthlyEl=document.getElementById('subscriptionMonthlyTotal'),yearlyEl=document.getElementById('subscriptionYearlyTotal');
+  if(!list)return;
+  const active=subscriptions.filter(s=>s.active!==false);
+  const monthly=active.reduce((sum,s)=>sum+subscriptionMonthlyAmount(s),0);
+  const yearly=monthly*12;
+  if(monthlyEl)monthlyEl.textContent=kr(monthly);
+  if(yearlyEl)yearlyEl.textContent=kr(yearly);
+  const sorted=active.slice().sort((a,b)=>String(a.nextDate||'').localeCompare(String(b.nextDate||'')));
+  list.innerHTML=sorted.map(s=>{
+    const d=subscriptionNextDate(s), freq=s.frequency==='yearly'?'Årlig':s.frequency==='semiannual'?'Hver 6. måned':s.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
+    const display=s.currency&&s.currency!=='NOK'?fmtN(s.amount)+' '+s.currency+' · NOK-estimat '+kr(billNokEstimate(s)):kr(s.amount);
+    return '<div class="row"><div class="rowtop"><b>📱 '+esc(s.name)+'</b><strong>'+display+'</strong></div><div class="muted">'+esc(freq)+' · '+esc(accountLabel(s.accountId))+' · Neste trekk: <b>'+(d?d.toLocaleDateString('nb-NO'):'–')+'</b></div><div style="margin-top:7px"><button class="primary" style="float:right;padding:5px 8px" onclick="recordSubscriptionPayment(\''+s.id+'\')">✅ Registrer betaling</button><button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openSubscription(\''+s.id+'\')">✏️ Rediger</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteSubscription(\''+s.id+'\')">Slett</button></div></div>';
+  }).join('')||'<div class="empty">Ingen aktive abonnementer ennå.</div>';
+}
+
 function renderBills(){
   billsList.innerHTML=bills.map(b=>{
     let n=nextDue(b);
     let freq=b.frequency==='yearly'?'Årlig':b.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
-    let billDisplay=b.currency&&b.currency!=='NOK'?fmtN(b.amount)+' '+b.currency+' · NOK-estimat '+kr(billNokEstimate(b)):kr(b.amount); return '<div class="row"><div class="rowtop"><b>📄 '+esc(b.name)+'</b><strong>'+billDisplay+'</strong></div><div class="muted">'+esc(b.cat)+' · '+esc(accountLabel(b.accountId))+' · '+freq+'</div><div style="margin-top:7px">Neste forfall: <b>'+n.toLocaleDateString('nb-NO')+'</b> <button class="primary" style="float:right;padding:5px 8px" onclick="recordBillPayment(\''+b.id+'\')">✅ Registrer betaling</button> <button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openBill(\''+b.id+'\')">✏️ Rediger</button> <button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteBill(\''+b.id+'\')">Slett</button></div></div>';
+    let billDisplay=b.currency&&b.currency!=='NOK'?fmtN(b.amount)+' '+b.currency+' · NOK-estimat '+kr(billNokEstimate(b)):kr(b.amount);
+    const payments=billPaymentTransactions(b.id).slice().sort((a,z)=>String(z.date||'').localeCompare(String(a.date||'')));
+    const paymentHtml=payments.length?'<details style="margin-top:8px"><summary>💳 Registrerte betalinger ('+payments.length+')</summary><div style="margin-top:8px">'+payments.map(p=>'<div class="row" style="margin:6px 0"><div class="rowtop"><span>'+new Date((p.date||'')+'T12:00:00').toLocaleDateString('nb-NO')+'</span><strong>'+kr(moneyNok(p))+'</strong></div><div class="muted">'+esc(accountLabel(p.accountId))+' · Forfall: '+(p.billPaymentForDate?new Date(p.billPaymentForDate+'T12:00:00').toLocaleDateString('nb-NO'):'–')+' <button class="secondary" style="float:right;padding:5px 8px" onclick="openPaymentEdit(\''+p.id+'\')">✏️ Rediger</button> <button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteLinkedPayment(\''+p.id+'\')">Slett</button></div></div>').join('')+'</div></details>':'';
+    return '<div class="row"><div class="rowtop"><b>📄 '+esc(b.name)+'</b><strong>'+billDisplay+'</strong></div><div class="muted">'+esc(b.cat)+' · '+esc(accountLabel(b.accountId))+' · '+freq+'</div><div style="margin-top:7px">Neste forfall: <b>'+n.toLocaleDateString('nb-NO')+'</b> <button class="primary" style="float:right;padding:5px 8px" onclick="recordBillPayment(\''+b.id+'\')">✅ Registrer betaling</button> <button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openBill(\''+b.id+'\')">✏️ Rediger</button> <button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteBill(\''+b.id+'\')">Slett</button></div>'+paymentHtml+'</div>';
   }).join('')||'<div class="empty">Ingen faste regninger ennå.</div>';
   let list=bills.map(b=>({b,n:nextDue(b)})).sort((a,b)=>a.n-b.n).slice(0,8);
   upcoming.innerHTML=list.map(x=>'<div class="row"><div class="rowtop"><b>'+x.n.toLocaleDateString('nb-NO')+' · '+esc(x.b.name)+'</b><span>'+kr(x.b.amount)+'</span></div><small>'+esc(accountLabel(x.b.accountId))+'</small></div>').join('')||'<div class="empty">Ingen kommende betalinger.</div>';
 }
+
 
 
 function drawBarChart(canvas, labels, values, title){
@@ -1412,7 +1631,7 @@ let pendingCSV=[];
 function downloadBlob(name,text,type){let blob=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function exportData(){
   let backup={
-    version:6,
+    version:7,
     exportedAt:new Date().toISOString(),
     transactions:tx,categories:cats,accounts:accounts,budgets:bud,goals:goals,transfers:transfers,bills:bills,
     creditCards:data.creditCards||[],creditPurchases:data.creditPurchases||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0},
@@ -1432,6 +1651,7 @@ function importFile(e){
  let reader=new FileReader();
  reader.onload=()=>{let text=reader.result;
    if(file.name.toLowerCase().endsWith('.json')){try{let b=JSON.parse(text);if(!b.transactions||!b.categories||!b.accounts){alert('Dette ser ikke ut som en Min Økonomi-sikkerhetskopi.');return}if(confirm('Importere sikkerhetskopien? Dette erstatter dataene som ligger i appen nå.')){tx=b.transactions||[];cats=b.categories||cats;accounts=b.accounts||[];bud=b.budgets||[];goals=b.goals||[];transfers=b.transfers||[];bills=b.bills||[];
+          subscriptions=Array.isArray(b.subscriptions)?b.subscriptions:[];
           data.creditCards=Array.isArray(b.creditCards)?b.creditCards:[];
           data.loans=Array.isArray(b.loans)?b.loans:[];
           data.assets=Array.isArray(b.assets)?b.assets:[];
@@ -2218,7 +2438,7 @@ async function graphqlRequest(query,variables={},retry=true){
 }
 function snapshotPayload(){
   return {
-    version:46,
+    version:48,
     savedAt:new Date().toISOString(),
     transactions:tx,
     categories:cats,
@@ -2227,6 +2447,7 @@ function snapshotPayload(){
     savingsGoals:goals,
     transfers,
     recurringBills:bills,
+    subscriptions:data.subscriptions||[],
     creditCards:data.creditCards||[],
     creditPurchases:data.creditPurchases||[],
     loans:data.loans||[],
@@ -2267,6 +2488,7 @@ function mergeSnapshots(local,cloud){
     savingsGoals:mergeById(local.savingsGoals,cloud.savingsGoals,x=>x?.id||[x?.name,x?.target].join('|')),
     transfers:mergeById(local.transfers,cloud.transfers,x=>x?.id||[x?.date,x?.from,x?.to,x?.amount].join('|')),
     recurringBills:mergeById(local.recurringBills,cloud.recurringBills,x=>x?.id||[x?.name,x?.dueDate,x?.amount].join('|')),
+    subscriptions:mergeById(local.subscriptions,cloud.subscriptions,x=>x?.id||[x?.name,x?.nextDate,x?.amount].join('|')),
     creditCards:mergeById(local.creditCards,cloud.creditCards,x=>x?.id||x?.name),
     creditPurchases:mergeById(local.creditPurchases,cloud.creditPurchases,x=>x?.id||[x?.provider,x?.name].join('|')),
     loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
@@ -2304,7 +2526,7 @@ async function cloudBackup(opts={auto:false}){
       // Continue below and write the merged snapshot to the cloud.
       payload.transactions=mergedPayload.transactions; payload.categories=mergedPayload.categories; payload.accounts=mergedPayload.accounts;
       payload.budgets=mergedPayload.budgets; payload.savingsGoals=mergedPayload.savingsGoals; payload.transfers=mergedPayload.transfers;
-      payload.recurringBills=mergedPayload.recurringBills; payload.creditCards=mergedPayload.creditCards; payload.creditPurchases=mergedPayload.creditPurchases; payload.loans=mergedPayload.loans;
+      payload.recurringBills=mergedPayload.recurringBills; payload.subscriptions=mergedPayload.subscriptions; payload.creditCards=mergedPayload.creditCards; payload.creditPurchases=mergedPayload.creditPurchases; payload.loans=mergedPayload.loans;
       payload.assets=mergedPayload.assets; payload.spendSettings=mergedPayload.spendSettings; payload.overviewPrefs=mergedPayload.overviewPrefs; payload.debtOrder=mergedPayload.debtOrder; payload.billOrder=mergedPayload.billOrder; payload.savedAt=mergedPayload.savedAt;
     }else{
       setAutoSyncStatus('<div class="sync-neutral">⚠️ Skydata er endret siden siste synk, men kunne ikke leses. Ingen data ble overskrevet.</div>');
@@ -2364,6 +2586,7 @@ async function cloudRestore(){
   goals=Array.isArray(b.savingsGoals)?b.savingsGoals:[];
   transfers=Array.isArray(b.transfers)?b.transfers:[];
   bills=Array.isArray(b.recurringBills)?b.recurringBills:[];
+  subscriptions=Array.isArray(b.subscriptions)?b.subscriptions:[];
   data.creditCards=Array.isArray(b.creditCards)?b.creditCards:[];
   data.creditPurchases=Array.isArray(b.creditPurchases)?b.creditPurchases:[];
   data.loans=Array.isArray(b.loans)?b.loans:[];
@@ -2764,7 +2987,7 @@ function render(){
   renderForecast();
   renderCalendar();
   renderSpend();
-fillSelects();renderBills();renderAnalytics();let ym=new Date().toISOString().slice(0,7),allMonth=tx.filter(x=>x.date.slice(0,7)===ym);fillFilters();let items=filteredItems(tx);
+fillSelects();renderBills();renderSubscriptions();renderAnalytics();let ym=new Date().toISOString().slice(0,7),allMonth=tx.filter(x=>x.date.slice(0,7)===ym);fillFilters();let items=filteredItems(tx);
 let inc=allMonth.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),exp=allMonth.filter(isCountedExpense).reduce((s,x)=>s+moneyNok(x),0);
 month.textContent=new Date().toLocaleDateString('nb-NO',{month:'long',year:'numeric'});income.textContent=kr(inc);expense.textContent=kr(exp);balance.textContent=kr(inc-exp);el('overviewAccountBalance').textContent=kr(accounts.reduce((s,a)=>s+accountBalance(a),0));
 accountSummary.innerHTML=accounts.map(a=>'<div class="row"><div class="rowtop"><b>'+esc(a.bank)+' – '+esc(a.name)+'</b><strong>'+kr(acctBalance(a))+'</strong></div></div>').join('')||'<div class="empty">Ingen kontoer ennå.</div>';
@@ -2822,7 +3045,9 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 /* v65: recurring bill payment tracking */
 /* v64: collapsible Gjeld & formue sections */
 /* v63: responsive analysis + settings order + sync payload completeness */
-/* v70: automatic purchase-credit transactions and linked payments */
+/* v71: linked bill-payment correction
+   v72: subscriptions overview and payment tracking
+   v70: automatic purchase-credit transactions and linked payments */
 /* v61: shared financial calculations + mobile overview scrolling */
 /* v60d: mobile navigation dropdown with reliable iPhone scrolling */
 (function(){
