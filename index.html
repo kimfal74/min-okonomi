@@ -42,7 +42,20 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 .overview-block.overview-hidden{display:none!important}
 .overview-details{margin-top:15px;background:white;border:1px solid #e4e7ed;border-radius:15px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .overview-details summary{list-style:none;cursor:pointer;padding:17px 18px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.overview-details summary::-webkit-details-marker{display:none}.debt-details{overflow-x:visible}.upcoming-pay-btn{padding:5px 8px;font-size:12px;white-space:nowrap}.debt-details .debt-panel{margin:0;border:0;padding:0;box-shadow:none;background:transparent}
+.overview-details summary::-webkit-details-marker{display:none}.debt-details{overflow-x:visible}
+.reorder-handle{margin-left:auto;color:#687080;font-size:.95rem;letter-spacing:2px;white-space:nowrap}
+.reorder-actions{display:inline-flex;gap:4px;margin-left:10px;vertical-align:middle}
+.reorder-actions button{min-width:34px;height:34px;padding:4px 8px;font-size:16px}
+.reorderable-section{transition:opacity .12s ease,outline-color .12s ease}
+.reorderable-section.dragging{opacity:.45}
+.reorderable-section.drop-target{outline:2px dashed #315efb;outline-offset:2px}
+.reorder-hint{font-size:.85rem;color:#687080;margin:4px 0 14px}
+@media (max-width:700px){
+  .reorder-handle{font-size:.8rem}
+  .reorder-actions{margin-left:6px}
+  .reorder-actions button{min-width:38px;height:38px}
+  .reorder-hint{font-size:.78rem}
+}.upcoming-pay-btn{padding:5px 8px;font-size:12px;white-space:nowrap}.debt-details .debt-panel{margin:0;border:0;padding:0;box-shadow:none;background:transparent}
 .overview-details summary:after{content:'▾';color:#687080;font-size:16px}
 .overview-details:not([open]) summary:after{content:'▸'}
 .overview-details .overview-body{padding:0 18px 18px}
@@ -506,11 +519,26 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 <div id="bills" class="hide">
 <h1>📅 Faste regninger</h1>
 <p class="muted">Legg inn regninger som kommer igjen, og få oversikt over neste forfall.</p>
-<div class="card">
-<div style="display:flex;justify-content:space-between;align-items:center"><h2>Mine regninger</h2><button onclick="openBill()">+ Ny regning</button></div>
-<div id="billsList"></div>
+<p class="reorder-hint">↕️ Dra boksene for å endre rekkefølgen, eller bruk ↑ ↓.</p>
+
+<div id="billSections">
+  <details class="overview-details reorderable-section" data-reorder-key="myBills" draggable="true" open>
+    <summary>📋 Mine regninger <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Mine regninger opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Mine regninger ned">↓</button></span></summary>
+    <div class="overview-body">
+      <div class="card" style="margin:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Mine regninger</h2><button onclick="openBill()">+ Ny regning</button></div>
+        <div id="billsList"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="overview-details reorderable-section" data-reorder-key="upcomingPayments" draggable="true" open>
+    <summary>💰 Kommende betalinger <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Kommende betalinger opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Kommende betalinger ned">↓</button></span></summary>
+    <div class="overview-body">
+      <div class="card" style="margin:0"><div id="upcoming"></div></div>
+    </div>
+  </details>
 </div>
-<div class="card"><h2>💰 Kommende betalinger</h2><div id="upcoming"></div></div>
 </div>
 <section id="tab-debt" class="tab-panel hide">
   <div class="section-head">
@@ -527,8 +555,9 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     <div class="card"><div class="label">Kredittkort brukt</div><div class="big" id="creditUsed">0 %</div></div>
   </div>
 
-  <details class="overview-details debt-details">
-    <summary>💳 Kredittkort</summary>
+  <p class="reorder-hint">↕️ Dra boksene for å endre rekkefølgen, eller bruk ↑ ↓.</p>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="creditCards" draggable="true">
+    <summary>💳 Kredittkort <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Kredittkort opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Kredittkort ned">↓</button></span></summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <form id="creditForm" class="form-grid">
@@ -545,8 +574,8 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details debt-details">
-    <summary>🛍️ Kjøpskreditt</summary>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="creditPurchases" draggable="true">
+    <summary>🛍️ Kjøpskreditt <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Kjøpskreditt opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Kjøpskreditt ned">↓</button></span></summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <p class="muted">Kreditt knyttet til kjøp, for eksempel Klarna, Walley, Qliro eller Svea.</p>
@@ -567,8 +596,8 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details debt-details">
-    <summary>🏦 Lån</summary>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="loans" draggable="true">
+    <summary>🏦 Lån <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Lån opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Lån ned">↓</button></span></summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <form id="loanForm" class="form-grid">
@@ -587,8 +616,8 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
     </div>
   </details>
 
-  <details class="overview-details debt-details">
-    <summary>🏠 Andre eiendeler</summary>
+  <details class="overview-details debt-details reorderable-section" data-reorder-key="assets" draggable="true">
+    <summary>🏠 Andre eiendeler <span class="reorder-handle" title="Dra for å flytte">⠿</span><span class="reorder-actions"><button type="button" class="secondary move-up" aria-label="Flytt Andre eiendeler opp">↑</button><button type="button" class="secondary move-down" aria-label="Flytt Andre eiendeler ned">↓</button></span></summary>
     <div class="overview-body">
       <div class="panel debt-panel">
         <p class="muted">Bankkontoene dine regnes allerede som eiendeler. Her kan du legge til f.eks. bolig, bil, fond eller andre verdier uten å telle bankkontoene dobbelt.</p>
@@ -1335,7 +1364,7 @@ function exportData(){
     exportedAt:new Date().toISOString(),
     transactions:tx,categories:cats,accounts:accounts,budgets:bud,goals:goals,transfers:transfers,bills:bills,
     creditCards:data.creditCards||[],creditPurchases:data.creditPurchases||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0},
-    overviewPrefs:overviewPrefs
+    overviewPrefs:overviewPrefs, debtOrder:debtOrder, billOrder:billOrder
   };
   downloadBlob('min-okonomi-sikkerhetskopi.json',JSON.stringify(backup,null,2),'application/json');
 }
@@ -1355,6 +1384,9 @@ function importFile(e){
           data.loans=Array.isArray(b.loans)?b.loans:[];
           data.assets=Array.isArray(b.assets)?b.assets:[];
           data.spendSettings=(b.spendSettings&&typeof b.spendSettings==='object')?b.spendSettings:{buffer:0};
+          if(Array.isArray(b.debtOrder))debtOrder=[...b.debtOrder.filter(k=>(REORDER_DEFAULTS.debt||[]).includes(k)),...(REORDER_DEFAULTS.debt||[]).filter(k=>!b.debtOrder.includes(k))];
+          if(Array.isArray(b.billOrder))billOrder=[...b.billOrder.filter(k=>(REORDER_DEFAULTS.bills||[]).includes(k)),...(REORDER_DEFAULTS.bills||[]).filter(k=>!b.billOrder.includes(k))];
+          saveReorderPrefs('debt',debtOrder);saveReorderPrefs('bills',billOrder);
           persist();save();render();alert('Sikkerhetskopien er importert!')}}catch(err){alert('Kunne ikke lese JSON-filen.')}} 
    else {let p=parseCSV(text);if(!p.rows.length){alert('CSV-filen inneholder ingen rader.');return}pendingCSV=p.rows;let hs=p.headers;
      let fill=(id,opts,guess)=>{let el=document.getElementById(id);el.innerHTML=opts.map((x,i)=>'<option value="'+i+'">'+esc(x)+'</option>').join('');let g=hs.findIndex(h=>h.toLowerCase().includes(guess));if(g>=0)el.value=g};
@@ -2070,7 +2102,7 @@ function snapshotPayload(){
     loans:data.loans||[],
     assets:data.assets||[],
     spendSettings:data.spendSettings||{buffer:0},
-    overviewPrefs:overviewPrefs
+    overviewPrefs:overviewPrefs, debtOrder:debtOrder, billOrder:billOrder
   };
 }
 let autoSyncTimer=null;
@@ -2110,7 +2142,9 @@ function mergeSnapshots(local,cloud){
     loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
     assets:mergeById(local.assets,cloud.assets,x=>x?.id||x?.name),
     spendSettings:(local.spendSettings&&typeof local.spendSettings==='object')?local.spendSettings:(cloud.spendSettings||{buffer:0}),
-    overviewPrefs:(local.overviewPrefs&&typeof local.overviewPrefs==='object')?local.overviewPrefs:(cloud.overviewPrefs||loadOverviewPrefs())
+    overviewPrefs:(local.overviewPrefs&&typeof local.overviewPrefs==='object')?local.overviewPrefs:(cloud.overviewPrefs||loadOverviewPrefs()),
+    debtOrder:Array.isArray(local.debtOrder)?local.debtOrder:(Array.isArray(cloud.debtOrder)?cloud.debtOrder:REORDER_DEFAULTS.debt.slice()),
+    billOrder:Array.isArray(local.billOrder)?local.billOrder:(Array.isArray(cloud.billOrder)?cloud.billOrder:REORDER_DEFAULTS.bills.slice())
   };
 }
 
@@ -2129,7 +2163,10 @@ async function cloudBackup(opts={auto:false}){
       goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills;
       data.creditCards=merged.creditCards; data.creditPurchases=merged.creditPurchases; data.loans=merged.loans; data.assets=merged.assets;
       data.spendSettings=merged.spendSettings;
-      overviewPrefs=merged.overviewPrefs||loadOverviewPrefs(); saveOverviewPrefs();
+      overviewPrefs=merged.overviewPrefs||loadOverviewPrefs();
+      if(Array.isArray(merged.debtOrder))debtOrder=merged.debtOrder;
+      if(Array.isArray(merged.billOrder))billOrder=merged.billOrder;
+      saveReorderPrefs('debt',debtOrder);saveReorderPrefs('bills',billOrder); saveOverviewPrefs();
       save();
       window.__restoringCloud=false;
       const mergedPayload=snapshotPayload();
@@ -2138,7 +2175,7 @@ async function cloudBackup(opts={auto:false}){
       payload.transactions=mergedPayload.transactions; payload.categories=mergedPayload.categories; payload.accounts=mergedPayload.accounts;
       payload.budgets=mergedPayload.budgets; payload.savingsGoals=mergedPayload.savingsGoals; payload.transfers=mergedPayload.transfers;
       payload.recurringBills=mergedPayload.recurringBills; payload.creditCards=mergedPayload.creditCards; payload.creditPurchases=mergedPayload.creditPurchases; payload.loans=mergedPayload.loans;
-      payload.assets=mergedPayload.assets; payload.spendSettings=mergedPayload.spendSettings; payload.overviewPrefs=mergedPayload.overviewPrefs; payload.savedAt=mergedPayload.savedAt;
+      payload.assets=mergedPayload.assets; payload.spendSettings=mergedPayload.spendSettings; payload.overviewPrefs=mergedPayload.overviewPrefs; payload.debtOrder=mergedPayload.debtOrder; payload.billOrder=mergedPayload.billOrder; payload.savedAt=mergedPayload.savedAt;
     }else{
       setAutoSyncStatus('<div class="sync-neutral">⚠️ Skydata er endret siden siste synk, men kunne ikke leses. Ingen data ble overskrevet.</div>');
       if(!opts.auto) throw new Error('Skydata er endret siden siste synk.');
@@ -2444,8 +2481,108 @@ if(autoSyncEl){autoSyncEl.checked=autoSyncEnabled(); autoSyncEl.addEventListener
 if(autoSyncEnabled()){setAutoSyncStatus('<div class="sync-good">🔄 Automatisk synk er aktiv.</div>'); setInterval(checkCloudChanges,30000);}
 renderNhost();
 
+
+const REORDER_DEFAULTS={
+  debt:['creditCards','creditPurchases','loans','assets'],
+  bills:['myBills','upcomingPayments']
+};
+function loadReorderPrefs(kind){
+  const key='mo7_'+kind+'_order';
+  try{
+    const saved=JSON.parse(localStorage.getItem(key)||'null');
+    const allowed=REORDER_DEFAULTS[kind]||[];
+    const order=Array.isArray(saved)?saved.filter(k=>allowed.includes(k)):[];
+    return [...order,...allowed.filter(k=>!order.includes(k))];
+  }catch(e){return (REORDER_DEFAULTS[kind]||[]).slice();}
+}
+let debtOrder=loadReorderPrefs('debt');
+let billOrder=loadReorderPrefs('bills');
+
+function saveReorderPrefs(kind,order){
+  localStorage.setItem('mo7_'+kind+'_order',JSON.stringify(order));
+  if(typeof markLocalDirty==='function'&&!window.__restoringCloud)markLocalDirty();
+}
+function applyReorder(kind,containerId){
+  const container=document.getElementById(containerId);
+  if(!container)return;
+  const order=kind==='debt'?debtOrder:billOrder;
+  const nodes=[...container.querySelectorAll('.reorderable-section[data-reorder-key]')];
+  order.forEach(k=>{
+    const node=nodes.find(x=>x.dataset.reorderKey===k);
+    if(node)container.appendChild(node);
+  });
+  bindReorder(kind,containerId);
+}
+function updateOrderFromDom(kind,container){
+  const order=[...container.querySelectorAll('.reorderable-section[data-reorder-key]')].map(x=>x.dataset.reorderKey);
+  if(kind==='debt')debtOrder=order;else billOrder=order;
+  saveReorderPrefs(kind,order);
+}
+function moveReorderSection(kind,container,section,direction){
+  const nodes=[...container.querySelectorAll('.reorderable-section[data-reorder-key]')];
+  const i=nodes.indexOf(section);
+  if(i<0)return;
+  if(direction==='up' && i>0)nodes[i-1].before(section);
+  if(direction==='down' && i<nodes.length-1)nodes[i+1].after(section);
+  updateOrderFromDom(kind,container);
+}
+const reorderDragState={};
+function bindReorder(kind,containerId){
+  const container=document.getElementById(containerId);
+  if(!container)return;
+  if(container.dataset.reorderBound!=='1'){
+    container.dataset.reorderBound='1';
+    container.addEventListener('click',e=>{
+      const btn=e.target.closest('.move-up,.move-down');
+      if(!btn)return;
+      e.preventDefault();
+      e.stopPropagation();
+      const section=btn.closest('.reorderable-section');
+      if(!section)return;
+      moveReorderSection(kind,container,section,btn.classList.contains('move-up')?'up':'down');
+    });
+  }
+  container.querySelectorAll('.reorderable-section[data-reorder-key]').forEach(section=>{
+    if(section.dataset.reorderBound==='1')return;
+    section.dataset.reorderBound='1';
+    section.addEventListener('dragstart',e=>{
+      reorderDragState[kind]=section;
+      section.classList.add('dragging');
+      if(e.dataTransfer){
+        e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('text/plain',section.dataset.reorderKey);
+      }
+    });
+    section.addEventListener('dragend',()=>{
+      section.classList.remove('dragging');
+      container.querySelectorAll('.reorderable-section').forEach(x=>x.classList.remove('drop-target'));
+      reorderDragState[kind]=null;
+    });
+    section.addEventListener('dragover',e=>{
+      e.preventDefault();
+      const dragged=reorderDragState[kind];
+      if(dragged&&dragged!==section)section.classList.add('drop-target');
+      if(e.dataTransfer)e.dataTransfer.dropEffect='move';
+    });
+    section.addEventListener('dragleave',()=>section.classList.remove('drop-target'));
+    section.addEventListener('drop',e=>{
+      e.preventDefault();
+      section.classList.remove('drop-target');
+      const dragged=reorderDragState[kind];
+      if(!dragged||dragged===section)return;
+      const nodes=[...container.querySelectorAll('.reorderable-section[data-reorder-key]')];
+      const from=nodes.indexOf(dragged),to=nodes.indexOf(section);
+      if(from<0||to<0)return;
+      if(from<to)section.after(dragged);else section.before(dragged);
+      updateOrderFromDom(kind,container);
+    });
+  });
+}
+
 function render(){
   applyOverviewLayout();
+  applyReorder('debt','tab-debt');
+  applyReorder('bills','billSections');
   renderMobilePreview();
   renderDashboard();
   renderDebt();
@@ -2505,6 +2642,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
+/* v66: reorderable Gjeld & formue + Faste regninger sections */
 /* v65: recurring bill payment tracking */
 /* v64: collapsible Gjeld & formue sections */
 /* v63: responsive analysis + settings order + sync payload completeness */
