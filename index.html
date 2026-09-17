@@ -23,7 +23,7 @@ th{font-size:13px;color:#687080}.actions{display:flex;gap:5px}.modal{display:non
 label{display:block;font-weight:bold;font-size:13px;margin:12px 0 5px}input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
 .actions2{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.progress{height:11px;background:#edf0f5;border-radius:20px;overflow:hidden;margin:10px 0}
 .bar{height:100%;background:#315efb}.bar.over{background:#d94b61}.row{padding:13px 0;border-bottom:1px solid #eee}.rowtop{display:flex;justify-content:space-between;gap:10px}
-.account{display:inline-block;background:#f1f3f7;border-radius:8px;padding:3px 7px;font-size:12px}.chartwrap{width:100%;overflow:auto}.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.legend span{font-size:13px}.empty{text-align:center;padding:25px;color:#687080}
+.account{display:inline-block;background:#f1f3f7;border-radius:8px;padding:3px 7px;font-size:12px}.chartwrap{width:100%;overflow:auto}#analytics canvas{display:block;width:100%;max-width:100%;height:260px}.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.legend span{font-size:13px}.empty{text-align:center;padding:25px;color:#687080}
 .bankgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.bankcard{border:1px solid #e5e7eb;border-radius:12px;padding:15px}.bankcard h3{margin:0 0 5px}
 @media(max-width:700px){.grid{grid-template-columns:1fr}header{align-items:flex-start}}
 
@@ -544,30 +544,15 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 
     <div class="panel">
       <h3>🛍️ Kjøpskreditt</h3>
-      <p class="muted">Kreditt knyttet til kjøp eller betalingstjenester, for eksempel Klarna, Walley, Qliro eller Svea.</p>
+      <p class="muted">Kreditt knyttet til kjøp, for eksempel Klarna, Walley, Qliro eller Svea.</p>
       <form id="purchaseCreditForm" class="form-grid">
         <input type="hidden" id="purchaseCreditId">
-        <label>Leverandør
-          <select id="purchaseCreditProvider">
-            <option value="Klarna">Klarna</option>
-            <option value="Walley">Walley</option>
-            <option value="Qliro">Qliro</option>
-            <option value="Svea">Svea</option>
-            <option value="Andre">Andre</option>
-          </select>
-        </label>
-        <label>Betalingsmåte
-          <select id="purchaseCreditType">
-            <option value="Faktura">Faktura</option>
-            <option value="Delbetaling">Delbetaling</option>
-            <option value="Kredittkonto">Kredittkonto</option>
-            <option value="Annet">Annet</option>
-          </select>
-        </label>
-        <label>Hva gjelder kjøpet?<input id="purchaseCreditName" required placeholder="F.eks. Sofa"></label>
-        <label>Opprinnelig beløp<input id="purchaseCreditOriginal" type="number" min="0" step="0.01"></label>
+        <label>Leverandør<select id="purchaseCreditProvider"><option>Klarna</option><option>Walley</option><option>Qliro</option><option>Svea</option><option>Andre</option></select></label>
+        <label>Betalingsmåte<select id="purchaseCreditType"><option>Faktura</option><option>Delbetaling</option><option>Kredittkonto</option><option>Annet</option></select></label>
+        <label>Kjøp / avtale<input id="purchaseCreditName" required placeholder="F.eks. Sofa, PC eller abonnement"></label>
+        <label>Opprinnelig beløp<input id="purchaseCreditOriginal" type="number" min="0" step="0.01" placeholder="2400"></label>
         <label>Utestående saldo<input id="purchaseCreditBalance" type="number" min="0" step="0.01" required></label>
-        <label>Neste betaling<input id="purchaseCreditPayment" type="number" min="0" step="0.01" placeholder="F.eks. 500"></label>
+        <label>Neste betaling<input id="purchaseCreditPayment" type="number" min="0" step="0.01" placeholder="600"></label>
         <label>Forfallsdato<input id="purchaseCreditDueDate" type="date"></label>
         <button class="primary" type="submit">💾 Lagre kjøpskreditt</button>
         <button class="secondary" type="button" id="purchaseCreditCancel" hidden>Avbryt</button>
@@ -874,8 +859,9 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 </section>
 
 
-<div id="settings" class="hide"><h1>⚙️ Innstillinger</h1><p class="muted">Sikkerhetskopi, synkronisering og appinnstillinger.</p><div class="card"><h2>🔐 Passord</h2><p class="muted">Vil du endre passordet? Send deg selv en sikker lenke på e-post.</p><button class="secondary" id="settingsResetPassword" type="button">📧 Send lenke for nytt passord</button><div id="settingsPasswordStatus" class="auth-status"></div></div>
+<div id="settings" class="hide"><h1>⚙️ Innstillinger</h1><p class="muted">Sikkerhetskopi, synkronisering og appinnstillinger.</p>
 <div class="card"><h2>☁️ Synkronisering</h2><p class="muted">Økonomidataene dine lagres lokalt først og kan synkroniseres med kontoen din.</p><div class="actions2"><button onclick="document.getElementById('cloudBackup').click()">☁️ Synkroniser nå</button><button class="secondary" onclick="document.getElementById('cloudRestore').click()">📥 Hent fra skyen</button></div><label style="display:flex;align-items:center;gap:10px;margin-top:15px"><input id="settingsAutoSync" type="checkbox" style="width:auto"> 🔄 Automatisk synkronisering</label><div id="settingsSyncStatus" class="muted" style="margin-top:8px"></div></div>
+<div class="card"><h2>🔐 Passord</h2><p class="muted">Vil du endre passordet? Send deg selv en sikker lenke på e-post.</p><button class="secondary" id="settingsResetPassword" type="button">📧 Send lenke for nytt passord</button><div id="settingsPasswordStatus" class="auth-status"></div></div>
 <div class="card"><h2>💾 Sikkerhetskopi</h2><p class="muted">Eksporter en lokal sikkerhetskopi eller importer en du allerede har laget.</p><div class="actions2"><button class="secondary" onclick="exportData()">📤 Eksporter sikkerhetskopi</button><button class="secondary" onclick="document.getElementById('importFile').click()">📥 Importer sikkerhetskopi</button></div><p class="muted" style="margin-bottom:0">CSV-import er også tilgjengelig for banktransaksjoner.</p></div>
 <div class="card"><h2>📱 App</h2><p class="muted">På HTTPS kan Min Økonomi installeres som app på mobil og PC.</p></div></div>
 
@@ -978,13 +964,13 @@ function readExtraData(){
     const saved=JSON.parse(localStorage.getItem('mo7_data')||'{}');
     return {
       creditCards:Array.isArray(saved.creditCards)?saved.creditCards:[],
-      purchaseCredits:Array.isArray(saved.purchaseCredits)?saved.purchaseCredits:[],
+      creditPurchases:Array.isArray(saved.creditPurchases)?saved.creditPurchases:[],
       loans:Array.isArray(saved.loans)?saved.loans:[],
       assets:Array.isArray(saved.assets)?saved.assets:[],
       spendSettings:(saved.spendSettings&&typeof saved.spendSettings==='object')?saved.spendSettings:{buffer:0}
     };
   }catch(e){
-    return {creditCards:[],purchaseCredits:[],loans:[],assets:[],spendSettings:{buffer:0}};
+    return {creditCards:[],creditPurchases:[],loans:[],assets:[],spendSettings:{buffer:0}};
   }
 }
 const extraData=readExtraData();
@@ -1010,7 +996,7 @@ function uid(){
    the newer v7-v18 modules. */
 const data={
   creditCards:extraData.creditCards,
-  purchaseCredits:extraData.purchaseCredits,
+  creditPurchases:extraData.creditPurchases,
   loans:extraData.loans,
   assets:extraData.assets,
   spendSettings:extraData.spendSettings
@@ -1027,7 +1013,7 @@ function save(){
   persist();
   localStorage.setItem('mo7_data',JSON.stringify({
     creditCards:data.creditCards||[],
-    purchaseCredits:data.purchaseCredits||[],
+    creditPurchases:data.creditPurchases||[],
     loans:data.loans||[],
     assets:data.assets||[],
     spendSettings:data.spendSettings||{buffer:0}
@@ -1037,7 +1023,7 @@ function save(){
 const kr=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills)); if(!window.__restoringCloud) markLocalDirty();};
-function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');closeMore()}
+function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');closeMore();if(id==='analytics')requestAnimationFrame(()=>renderAnalytics())}
 function accountLabel(id){let a=accounts.find(x=>x.id===id);return a?a.bank+' – '+a.name:'Ikke valgt'}
 function fillSelects(){
 cat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('')+'<option value="__new">➕ Ny kategori...</option>';
@@ -1245,14 +1231,21 @@ function drawLineChart(canvas, labels, incomes, expenses){
   ctx.textAlign='left';ctx.fillText('● Inntekt',left,14);ctx.fillText('● Utgift',left+75,14);
 }
 function renderAnalytics(){
-  let year=new Date().getFullYear(), ytx=tx.filter(x=>x.date.slice(0,4)==year);
+  let year=new Date().getFullYear(), ytx=tx.filter(x=>String(x.date||'').slice(0,4)==String(year));
   let byCat={};ytx.filter(x=>x.type==='expense').forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+moneyNok(x));
-  let top=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];topCategory.textContent=top?top[0]:'–';
-  let total=ytx.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0);yearExpense.textContent=kr(total);
-  let monthly=Array.from({length:12},(_,m)=>{let mm=String(m+1).padStart(2,'0'),a=ytx.filter(x=>x.date.slice(0,7)==year+'-'+mm);return {i:a.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),e:a.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0)}});
-  avgExpense.textContent=kr(monthly.reduce((s,x)=>s+x.e,0)/12);
-  drawBarChart(categoryChart,Object.keys(byCat),Object.values(byCat));
-  drawLineChart(monthlyChart,['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'],monthly.map(x=>x.i),monthly.map(x=>x.e));
+  let top=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  const topEl=el('topCategory'), avgEl=el('avgExpense'), yearEl=el('yearExpense');
+  if(topEl)topEl.textContent=top?top[0]:'–';
+  let total=ytx.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0);
+  if(yearEl)yearEl.textContent=kr(total);
+  let monthly=Array.from({length:12},(_,m)=>{let mm=String(m+1).padStart(2,'0'),a=ytx.filter(x=>String(x.date||'').slice(0,7)==year+'-'+mm);return {i:a.filter(x=>x.type==='income').reduce((s,x)=>s+moneyNok(x),0),e:a.filter(x=>x.type==='expense').reduce((s,x)=>s+moneyNok(x),0)}});
+  if(avgEl)avgEl.textContent=kr(monthly.reduce((s,x)=>s+x.e,0)/12);
+  const categoryCanvas=el('categoryChart'), monthlyCanvas=el('monthlyChart');
+  if(!categoryCanvas || !monthlyCanvas)return;
+  const chartWidth=categoryCanvas.parentElement?.clientWidth||0;
+  if(chartWidth<=0)return;
+  drawBarChart(categoryCanvas,Object.keys(byCat),Object.values(byCat));
+  drawLineChart(monthlyCanvas,['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'],monthly.map(x=>x.i),monthly.map(x=>x.e));
 }
 function fillFilters(){
   let oldA=typeof filterAccount!=='undefined'?filterAccount.value:'',oldC=typeof filterCategory!=='undefined'?filterCategory.value:'',oldT=typeof filterType!=='undefined'?filterType.value:'';
@@ -1283,7 +1276,7 @@ function exportData(){
     version:6,
     exportedAt:new Date().toISOString(),
     transactions:tx,categories:cats,accounts:accounts,budgets:bud,goals:goals,transfers:transfers,bills:bills,
-    creditCards:data.creditCards||[],purchaseCredits:data.purchaseCredits||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0},
+    creditCards:data.creditCards||[],creditPurchases:data.creditPurchases||[],loans:data.loans||[],assets:data.assets||[],spendSettings:data.spendSettings||{buffer:0},
     overviewPrefs:overviewPrefs
   };
   downloadBlob('min-okonomi-sikkerhetskopi.json',JSON.stringify(backup,null,2),'application/json');
@@ -1301,7 +1294,6 @@ function importFile(e){
  reader.onload=()=>{let text=reader.result;
    if(file.name.toLowerCase().endsWith('.json')){try{let b=JSON.parse(text);if(!b.transactions||!b.categories||!b.accounts){alert('Dette ser ikke ut som en Min Økonomi-sikkerhetskopi.');return}if(confirm('Importere sikkerhetskopien? Dette erstatter dataene som ligger i appen nå.')){tx=b.transactions||[];cats=b.categories||cats;accounts=b.accounts||[];bud=b.budgets||[];goals=b.goals||[];transfers=b.transfers||[];bills=b.bills||[];
           data.creditCards=Array.isArray(b.creditCards)?b.creditCards:[];
-          data.purchaseCredits=Array.isArray(b.purchaseCredits)?b.purchaseCredits:[];
           data.loans=Array.isArray(b.loans)?b.loans:[];
           data.assets=Array.isArray(b.assets)?b.assets:[];
           data.spendSettings=(b.spendSettings&&typeof b.spendSettings==='object')?b.spendSettings:{buffer:0};
@@ -1350,7 +1342,7 @@ function renderDebt(){
   const accountAssets = (data.accounts||[]).reduce((sum,a)=>sum + accountBalance(a),0);
   const otherAssets = (data.assets||[]).reduce((s,a)=>s+Number(a.value||0),0);
   const creditDebt = (data.creditCards||[]).reduce((s,c)=>s+Number(c.balance||0),0);
-  const purchaseCreditDebt = (data.purchaseCredits||[]).reduce((s,c)=>s+Number(c.balance||0),0);
+  const purchaseCreditDebt = (data.creditPurchases||[]).reduce((s,c)=>s+Number(c.balance||0),0);
   const loanDebt = (data.loans||[]).reduce((s,l)=>s+Number(l.balance||0),0);
   const assets = accountAssets + otherAssets;
   const debt = creditDebt + purchaseCreditDebt + loanDebt;
@@ -1369,11 +1361,9 @@ function renderDebt(){
       <div class="actions"><button onclick="editCredit('${c.id}')">✏️</button><button onclick="deleteCredit('${c.id}')">🗑️</button></div>
     </div>`).join('') : '<p class="muted">Ingen kredittkort lagt inn ennå.</p>';
 
-  document.getElementById('purchaseCreditList').innerHTML = (data.purchaseCredits||[]).length ? data.purchaseCredits.map(c=>`
+  document.getElementById('purchaseCreditList').innerHTML = (data.creditPurchases||[]).length ? data.creditPurchases.map(c=>`
     <div class="row-item">
-      <div><strong>${esc(c.provider||'Andre')} · ${esc(c.name)}</strong>
-        <div class="muted">${esc(c.type||'Annet')} · Saldo: ${fmtN(c.balance)} kr${c.original?` · Opprinnelig ${fmtN(c.original)} kr`:''}${c.payment?` · Neste betaling ${fmtN(c.payment)} kr`:''}${c.dueDate?` · Forfall: ${new Date(c.dueDate+'T00:00:00').toLocaleDateString('nb-NO')}`:''}</div>
-      </div>
+      <div><strong>${esc(c.provider||'Andre')} · ${esc(c.name)}</strong><div class="muted">${esc(c.type||'')} · Utestående: ${fmtN(c.balance)} kr${c.original?` · Opprinnelig: ${fmtN(c.original)} kr`:''}${c.payment?` · Neste betaling: ${fmtN(c.payment)} kr`:''}${c.dueDate?` · Forfall: ${esc(c.dueDate)}`:''}</div></div>
       <div class="actions"><button onclick="editPurchaseCredit('${c.id}')">✏️</button><button onclick="deletePurchaseCredit('${c.id}')">🗑️</button></div>
     </div>`).join('') : '<p class="muted">Ingen kjøpskreditt lagt inn ennå.</p>';
 
@@ -1390,9 +1380,8 @@ function renderDebt(){
     </div>`).join('') : '<p class="muted">Ingen andre eiendeler lagt inn ennå.</p>';
 }
 
-const creditFormEl=el('creditForm'), loanFormEl=el('loanForm'), assetFormEl=el('assetForm');
-const creditCancelEl=el('creditCancel'), loanCancelEl=el('loanCancel'), assetCancelEl=el('assetCancel');
-const purchaseCreditFormEl=el('purchaseCreditForm'), purchaseCreditCancelEl=el('purchaseCreditCancel');
+const creditFormEl=el('creditForm'), purchaseCreditFormEl=el('purchaseCreditForm'), loanFormEl=el('loanForm'), assetFormEl=el('assetForm');
+const creditCancelEl=el('creditCancel'), purchaseCreditCancelEl=el('purchaseCreditCancel'), loanCancelEl=el('loanCancel'), assetCancelEl=el('assetCancel');
 
 creditFormEl.addEventListener('submit',e=>{
   e.preventDefault();
@@ -1404,55 +1393,22 @@ creditFormEl.addEventListener('submit',e=>{
 });
 function resetCredit(){el('creditId').value='';el('creditName').value='';el('creditLimit').value='';el('creditBalance').value='';el('creditDue').value='';creditCancelEl.hidden=true;}
 creditCancelEl.addEventListener('click',resetCredit);
-function editCredit(id){const c=data.creditCards.find(x=>x.id===id); if(!c)return; el('creditId').value=c.id;el('creditName').value=c.name;el('creditLimit').value=c.limit;el('creditBalance').value=c.balance;el('creditDue').value=c.due||'';creditCancelEl.hidden=false;}
-function deleteCredit(id){if(confirm('Slette dette kredittkortet?')){data.creditCards=data.creditCards.filter(x=>x.id!==id);save();render();}}
 
 purchaseCreditFormEl.addEventListener('submit',e=>{
   e.preventDefault();
-  const obj={
-    id:el('purchaseCreditId').value||uid(),
-    provider:el('purchaseCreditProvider').value,
-    type:el('purchaseCreditType').value,
-    name:el('purchaseCreditName').value.trim(),
-    original:readAmount('purchaseCreditOriginal'),
-    balance:readAmount('purchaseCreditBalance'),
-    payment:readAmount('purchaseCreditPayment'),
-    dueDate:el('purchaseCreditDueDate').value||''
-  };
+  const obj={id:el('purchaseCreditId').value||uid(),provider:el('purchaseCreditProvider').value,type:el('purchaseCreditType').value,name:el('purchaseCreditName').value.trim(),original:readAmount('purchaseCreditOriginal'),balance:readAmount('purchaseCreditBalance'),payment:readAmount('purchaseCreditPayment'),dueDate:el('purchaseCreditDueDate').value||''};
   if(!obj.name){alert('Skriv inn hva kjøpskreditten gjelder.');return;}
-  const i=data.purchaseCredits.findIndex(x=>x.id===obj.id);
-  if(i>=0)data.purchaseCredits[i]=obj;else data.purchaseCredits.push(obj);
-  save();resetPurchaseCredit();render();
+  const i=data.creditPurchases.findIndex(x=>x.id===obj.id);
+  if(i>=0)data.creditPurchases[i]=obj; else data.creditPurchases.push(obj);
+  save(); resetPurchaseCredit(); render();
 });
-function resetPurchaseCredit(){
-  el('purchaseCreditId').value='';
-  el('purchaseCreditProvider').value='Klarna';
-  el('purchaseCreditType').value='Faktura';
-  el('purchaseCreditName').value='';
-  el('purchaseCreditOriginal').value='';
-  el('purchaseCreditBalance').value='';
-  el('purchaseCreditPayment').value='';
-  el('purchaseCreditDueDate').value='';
-  purchaseCreditCancelEl.hidden=true;
-}
+function resetPurchaseCredit(){el('purchaseCreditId').value='';el('purchaseCreditProvider').value='Klarna';el('purchaseCreditType').value='Faktura';el('purchaseCreditName').value='';el('purchaseCreditOriginal').value='';el('purchaseCreditBalance').value='';el('purchaseCreditPayment').value='';el('purchaseCreditDueDate').value='';purchaseCreditCancelEl.hidden=true;}
 purchaseCreditCancelEl.addEventListener('click',resetPurchaseCredit);
-function editPurchaseCredit(id){
-  const c=data.purchaseCredits.find(x=>x.id===id);if(!c)return;
-  el('purchaseCreditId').value=c.id;
-  el('purchaseCreditProvider').value=c.provider||'Andre';
-  el('purchaseCreditType').value=c.type||'Annet';
-  el('purchaseCreditName').value=c.name||'';
-  el('purchaseCreditOriginal').value=c.original??'';
-  el('purchaseCreditBalance').value=c.balance??'';
-  el('purchaseCreditPayment').value=c.payment??'';
-  el('purchaseCreditDueDate').value=c.dueDate||'';
-  purchaseCreditCancelEl.hidden=false;
-}
-function deletePurchaseCredit(id){
-  if(confirm('Slette denne kjøpskreditten?')){
-    data.purchaseCredits=data.purchaseCredits.filter(x=>x.id!==id);save();render();
-  }
-}
+function editPurchaseCredit(id){const c=data.creditPurchases.find(x=>x.id===id);if(!c)return;el('purchaseCreditId').value=c.id;el('purchaseCreditProvider').value=c.provider||'Andre';el('purchaseCreditType').value=c.type||'Annet';el('purchaseCreditName').value=c.name||'';el('purchaseCreditOriginal').value=c.original??'';el('purchaseCreditBalance').value=c.balance??'';el('purchaseCreditPayment').value=c.payment??'';el('purchaseCreditDueDate').value=c.dueDate||'';purchaseCreditCancelEl.hidden=false;}
+function deletePurchaseCredit(id){if(confirm('Slette denne kjøpskreditten?')){data.creditPurchases=data.creditPurchases.filter(x=>x.id!==id);save();render();}}
+
+function editCredit(id){const c=data.creditCards.find(x=>x.id===id); if(!c)return; el('creditId').value=c.id;el('creditName').value=c.name;el('creditLimit').value=c.limit;el('creditBalance').value=c.balance;el('creditDue').value=c.due||'';creditCancelEl.hidden=false;}
+function deleteCredit(id){if(confirm('Slette dette kredittkortet?')){data.creditCards=data.creditCards.filter(x=>x.id!==id);save();render();}}
 
 loanFormEl.addEventListener('submit',e=>{
   e.preventDefault();
@@ -1891,9 +1847,8 @@ function dashboardData(){
   upcoming.sort((a,b)=>a.date-b.date);
 
   const credit=(data.creditCards||[]).reduce((s,c)=>s+Number(c.balance||0),0);
-  const purchaseCredit=(data.purchaseCredits||[]).reduce((s,c)=>s+Number(c.balance||0),0);
   const loans=(data.loans||[]).reduce((s,l)=>s+Number(l.balance||0),0);
-  const debt=credit+purchaseCredit+loans;
+  const debt=credit+loans;
   const other=(data.assets||[]).reduce((s,a)=>s+Number(a.value||0),0);
   const worth=balance+other-debt;
 
@@ -2055,10 +2010,11 @@ function snapshotPayload(){
     transfers,
     recurringBills:bills,
     creditCards:data.creditCards||[],
-    purchaseCredits:data.purchaseCredits||[],
+    creditPurchases:data.creditPurchases||[],
     loans:data.loans||[],
     assets:data.assets||[],
-    spendSettings:data.spendSettings||{buffer:0}
+    spendSettings:data.spendSettings||{buffer:0},
+    overviewPrefs:overviewPrefs
   };
 }
 let autoSyncTimer=null;
@@ -2094,7 +2050,7 @@ function mergeSnapshots(local,cloud){
     transfers:mergeById(local.transfers,cloud.transfers,x=>x?.id||[x?.date,x?.from,x?.to,x?.amount].join('|')),
     recurringBills:mergeById(local.recurringBills,cloud.recurringBills,x=>x?.id||[x?.name,x?.dueDate,x?.amount].join('|')),
     creditCards:mergeById(local.creditCards,cloud.creditCards,x=>x?.id||x?.name),
-    purchaseCredits:mergeById(local.purchaseCredits,cloud.purchaseCredits,x=>x?.id||[x?.provider,x?.name,x?.dueDate].join('|')),
+    creditPurchases:mergeById(local.creditPurchases,cloud.creditPurchases,x=>x?.id||[x?.provider,x?.name].join('|')),
     loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
     assets:mergeById(local.assets,cloud.assets,x=>x?.id||x?.name),
     spendSettings:(local.spendSettings&&typeof local.spendSettings==='object')?local.spendSettings:(cloud.spendSettings||{buffer:0}),
@@ -2115,7 +2071,7 @@ async function cloudBackup(opts={auto:false}){
       window.__restoringCloud=true;
       tx=merged.transactions; cats=merged.categories; accounts=merged.accounts; bud=merged.budgets;
       goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills;
-      data.creditCards=merged.creditCards; data.purchaseCredits=merged.purchaseCredits||[]; data.loans=merged.loans; data.assets=merged.assets;
+      data.creditCards=merged.creditCards; data.creditPurchases=merged.creditPurchases; data.loans=merged.loans; data.assets=merged.assets;
       data.spendSettings=merged.spendSettings;
       overviewPrefs=merged.overviewPrefs||loadOverviewPrefs(); saveOverviewPrefs();
       save();
@@ -2125,8 +2081,8 @@ async function cloudBackup(opts={auto:false}){
       // Continue below and write the merged snapshot to the cloud.
       payload.transactions=mergedPayload.transactions; payload.categories=mergedPayload.categories; payload.accounts=mergedPayload.accounts;
       payload.budgets=mergedPayload.budgets; payload.savingsGoals=mergedPayload.savingsGoals; payload.transfers=mergedPayload.transfers;
-      payload.recurringBills=mergedPayload.recurringBills; payload.creditCards=mergedPayload.creditCards; payload.purchaseCredits=mergedPayload.purchaseCredits; payload.loans=mergedPayload.loans;
-      payload.assets=mergedPayload.assets; payload.spendSettings=mergedPayload.spendSettings; payload.savedAt=mergedPayload.savedAt;
+      payload.recurringBills=mergedPayload.recurringBills; payload.creditCards=mergedPayload.creditCards; payload.creditPurchases=mergedPayload.creditPurchases; payload.loans=mergedPayload.loans;
+      payload.assets=mergedPayload.assets; payload.spendSettings=mergedPayload.spendSettings; payload.overviewPrefs=mergedPayload.overviewPrefs; payload.savedAt=mergedPayload.savedAt;
     }else{
       setAutoSyncStatus('<div class="sync-neutral">⚠️ Skydata er endret siden siste synk, men kunne ikke leses. Ingen data ble overskrevet.</div>');
       if(!opts.auto) throw new Error('Skydata er endret siden siste synk.');
@@ -2186,6 +2142,7 @@ async function cloudRestore(){
   transfers=Array.isArray(b.transfers)?b.transfers:[];
   bills=Array.isArray(b.recurringBills)?b.recurringBills:[];
   data.creditCards=Array.isArray(b.creditCards)?b.creditCards:[];
+  data.creditPurchases=Array.isArray(b.creditPurchases)?b.creditPurchases:[];
   data.loans=Array.isArray(b.loans)?b.loans:[];
   data.assets=Array.isArray(b.assets)?b.assets:[];
   data.spendSettings=(b.spendSettings&&typeof b.spendSettings==='object')?b.spendSettings:{buffer:0};
@@ -2492,7 +2449,7 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
-/* v62: Kjøpskreditt for Klarna/Walley/Qliro/Svea – preserves v61 functionality */
+/* v63: responsive analysis + settings order + sync payload completeness */
 /* v61: shared financial calculations + mobile overview scrolling */
 /* v60d: mobile navigation dropdown with reliable iPhone scrolling */
 (function(){
