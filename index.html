@@ -1003,8 +1003,10 @@ html,body{width:100%;max-width:100%;overflow-x:visible}
 
 <div class="modal" id="paymentEditModal"><div class="dialog"><h2 id="paymentEditTitle">✏️ Rediger betaling</h2>
 <p id="paymentEditInfo" class="muted"></p>
-<form onsubmit="savePaymentEdit(event)"><input id="paymentEditId" type="hidden">
+<form onsubmit="savePaymentEdit(event)"><input id="paymentEditId" type="hidden"><input id="paymentEditSubscriptionId" type="hidden">
 <label>Beløp<input id="paymentEditAmount" inputmode="decimal" min="0.01" step="0.01" required></label>
+<label>Faktisk belastet i NOK <span class="muted">(valgfritt)</span></label><input id="paymentEditActualNok" inputmode="decimal" min="0" step="0.01" placeholder="F.eks. 376,42">
+<div id="paymentEditActualInfo" class="muted" style="margin-top:4px">For utenlandsvaluta kan du skrive inn beløpet som faktisk ble trukket fra kontoen.</div>
 <label>Fra konto<select id="paymentEditAccount" required></select></label>
 <label>Betalingsdato<input id="paymentEditDate" type="date" required></label>
 <div class="actions2"><button type="button" class="secondary" onclick="closeM('paymentEditModal')">Avbryt</button><button>💾 Lagre endring</button></div>
@@ -1133,7 +1135,7 @@ function save(){
 const kr=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills));localStorage.setItem(K.subscription,JSON.stringify(subscriptions)); if(!window.__restoringCloud) markLocalDirty();};
-function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');else document.getElementById('moreBtn').classList.remove('active');closeMore();try{sessionStorage.setItem('mo7_current_tab',id)}catch(e){}if(id==='analytics')requestAnimationFrame(()=>renderAnalytics())}
+function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');else document.getElementById('moreBtn').classList.remove('active');closeMore();try{sessionStorage.setItem('mo7_current_tab',id)}catch(e){}try{localStorage.setItem('mo7_current_tab',id)}catch(e){}if(id==='analytics')requestAnimationFrame(()=>renderAnalytics())}
 function accountLabel(id){let a=accounts.find(x=>x.id===id);return a?a.bank+' – '+a.name:'Ikke valgt'}
 function fillSelects(){
 cat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('')+'<option value="__new">➕ Ny kategori...</option>';
@@ -1363,6 +1365,7 @@ function openPaymentEdit(id){
   const accounts=data.accounts||[];
   if(!accounts.length){alert('Du trenger en konto før du kan redigere en betaling.');return;}
   el('paymentEditId').value=id;
+  el('paymentEditSubscriptionId').value='';
   const isBill=!!p.billId;
   const isSubscription=p.source==='subscriptionPayment'||!!p.subscriptionId;
   const c=(!isBill&&!isSubscription)?data.creditPurchases.find(x=>x.id===p.creditPurchaseId):null;
@@ -1371,21 +1374,61 @@ function openPaymentEdit(id){
   el('paymentEditTitle').textContent=isBill?'🧾 Rediger regningsbetaling':isSubscription?'📱 Rediger abonnementbetaling':'💳 Rediger kjøpskredittbetaling';
   el('paymentEditInfo').textContent=isBill?(b?`${b.name} · Forfallsdato: ${new Date((p.billPaymentForDate||'')+'T12:00:00').toLocaleDateString('nb-NO')}`:'Regningsbetaling'):isSubscription?(sub?`${sub.name} · Neste trekk: ${new Date((sub.nextDate||'')+'T12:00:00').toLocaleDateString('nb-NO')}`:'Abonnementbetaling'):(c?`${c.provider||'Andre'} · ${c.name} · Utestående: ${fmtN(c.balance)} kr`:'Kjøpskredittbetaling');
   el('paymentEditAmount').value=p.amount??'';
+  el('paymentEditActualNok').value=p.actualNok??'';
+  el('paymentEditActualInfo').textContent=(p.currency||'NOK')==='NOK'?'NOK-betaling: faktisk belastet er lik beløpet.':'For utenlandsvaluta: skriv inn beløpet som faktisk ble trukket fra kontoen. Hvis feltet står tomt, brukes NOK-estimatet.';
   el('paymentEditAccount').innerHTML=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('');
   el('paymentEditAccount').value=p.accountId||'';
   el('paymentEditDate').value=p.date||new Date().toISOString().slice(0,10);
   openM('paymentEditModal');
 }
-function savePaymentEdit(e){
+async function recordSubscriptionPayment(id){
+  const s=subscriptions.find(x=>x.id===id);if(!s||s.active===false)return;
+  if(!s.accountId){alert('Dette abonnementet har ingen bank/konto. Velg en konto først.');return}
+  const amount=Number(s.amount||0), paidDate=new Date().toISOString().slice(0,10);
+  let rate=1,nokAmount=amount;
+  if((s.currency||'NOK')!=='NOK'){
+    try{rate=await fetchNokRate(s.currency,paidDate);nokAmount=Math.round(amount*rate*100)/100}catch(e){alert('Kunne ikke hente valutakurs for betalingen: '+e.message);return}
+  }
+  el('paymentEditId').value='';
+  el('paymentEditSubscriptionId').value=s.id;
+  el('paymentEditTitle').textContent='📱 Registrer abonnementbetaling';
+  el('paymentEditInfo').textContent=`${s.name} · ${fmtN(amount)} ${s.currency||'NOK'} · NOK-estimat ${fmtN(nokAmount)} kr`;
+  el('paymentEditAmount').value=amount;
+  el('paymentEditActualNok').value=(s.currency||'NOK')==='NOK'?amount:nokAmount;
+  el('paymentEditActualInfo').textContent=(s.currency||'NOK')==='NOK'?'NOK-betaling: faktisk belastet er lik beløpet.':'Skriv inn det faktiske NOK-beløpet banken trakk. NOK-estimatet er forhåndsutfylt og kan endres.';
+  const accounts=data.accounts||[];
+  el('paymentEditAccount').innerHTML=accounts.map(a=>'<option value="'+a.id+'">'+esc(a.bank+' – '+a.name)+'</option>').join('');
+  el('paymentEditAccount').value=s.accountId||accounts[0]?.id||'';
+  el('paymentEditDate').value=paidDate;
+  openM('paymentEditModal');
+}
+async function savePaymentEdit(e){
   e.preventDefault();
-  const id=el('paymentEditId').value, p=tx.find(x=>x.id===id); if(!p)return;
+  const id=el('paymentEditId').value;
+  const subscriptionId=el('paymentEditSubscriptionId').value;
+  const p=id?tx.find(x=>x.id===id):null;
   const amount=readAmount('paymentEditAmount');
   if(!(amount>0)){alert('Skriv inn et beløp større enn 0.');return}
   const accountId=el('paymentEditAccount').value;
   if(!accountId){alert('Velg konto for betalingen.');return}
   const date=el('paymentEditDate').value;
   if(!date){alert('Velg en betalingsdato.');return}
-  if(p.creditPurchaseId){
+  const actualInput=readAmount('paymentEditActualNok');
+  if(subscriptionId && !p){
+    const sub=subscriptions.find(x=>x.id===subscriptionId); if(!sub)return;
+    let rate=1,nokAmount=amount;
+    if((sub.currency||'NOK')!=='NOK'){
+      try{rate=await fetchNokRate(sub.currency,date);nokAmount=Math.round(amount*rate*100)/100}catch(err){alert('Kunne ikke hente valutakurs for betalingen: '+err.message);return}
+    }
+    const actualNok=(sub.currency||'NOK')==='NOK'?amount:(actualInput>0?actualInput:nokAmount);
+    const previousNextDate=sub.nextDate||date;
+    tx.push({id:uid(),desc:sub.name,amount,currency:sub.currency||'NOK',rate,nokAmount,actualNok,type:'expense',cat:sub.cat||'Annet',accountId,date,subscriptionId:sub.id,subscriptionPaymentForDate:previousNextDate,subscriptionPreviousNextDate:previousNextDate,source:'subscriptionPayment'});
+    sub.lastPaidForDate=previousNextDate;
+    const next=subscriptionNextDate(sub)||new Date(date+'T12:00:00');
+    const nextDate=advanceSubscriptionDate(next,sub.frequency);
+    sub.nextDate=nextDate.toISOString().slice(0,10);
+  }else if(!p){return}
+  else if(p.creditPurchaseId){
     const c=data.creditPurchases.find(x=>x.id===p.creditPurchaseId); if(!c)return;
     const otherPaid=tx.filter(x=>x.source==='creditPayment'&&x.creditPurchaseId===c.id&&x.id!==p.id).reduce((sum,x)=>sum+Number(x.amount||0),0);
     const original=Number(c.original||0);
@@ -1398,15 +1441,22 @@ function savePaymentEdit(e){
     const b=bills.find(x=>x.id===p.billId); if(!b)return;
     p.amount=amount;
     if((p.currency||'NOK')==='NOK'){p.rate=1;p.nokAmount=amount;p.actualNok=amount;}
-    else {p.actualNok=null;}
+    else {
+      try{p.rate=await fetchNokRate(p.currency,date);p.nokAmount=Math.round(amount*p.rate*100)/100;}catch(err){alert('Kunne ikke hente valutakurs for betalingen: '+err.message);return}
+      p.actualNok=actualInput>0?actualInput:p.nokAmount;
+    }
     p.accountId=accountId;p.date=date;p.type='expense';p.source='billPayment';
     refreshBillPaymentState(b.id);
   }else if(p.subscriptionId){
     const sub=subscriptions.find(x=>x.id===p.subscriptionId); if(!sub)return;
     p.amount=amount;
     if((p.currency||'NOK')==='NOK'){p.rate=1;p.nokAmount=amount;p.actualNok=amount;}
-    else {p.actualNok=null;}
+    else {
+      try{p.rate=await fetchNokRate(p.currency,date);p.nokAmount=Math.round(amount*p.rate*100)/100;}catch(err){alert('Kunne ikke hente valutakurs for betalingen: '+err.message);return}
+      p.actualNok=actualInput>0?actualInput:p.nokAmount;
+    }
     p.accountId=accountId;p.date=date;p.type='expense';p.source='subscriptionPayment';
+    sub.lastPaidForDate=p.subscriptionPaymentForDate||sub.lastPaidForDate||'';
   }
   save();closeM('paymentEditModal');e.target.reset();render();
   if(typeof window.renderUpcomingBills==='function')window.renderUpcomingBills();
@@ -1421,7 +1471,11 @@ function deleteLinkedPayment(id){
   if(billId)refreshBillPaymentState(billId);
   if(subscriptionId){
     const sub=subscriptions.find(x=>x.id===subscriptionId);
-    if(sub && subscriptionPreviousNextDate)sub.nextDate=subscriptionPreviousNextDate;
+    if(sub){
+      if(subscriptionPreviousNextDate)sub.nextDate=subscriptionPreviousNextDate;
+      const remaining=tx.filter(x=>x.subscriptionId===subscriptionId&&x.source==='subscriptionPayment').sort((a,b)=>String(a.subscriptionPaymentForDate||'').localeCompare(String(b.subscriptionPaymentForDate||'')));
+      sub.lastPaidForDate=remaining.length?remaining[remaining.length-1].subscriptionPaymentForDate||'':'';
+    }
   }
   if(creditId){
     const c=data.creditPurchases.find(x=>x.id===creditId);
@@ -1519,7 +1573,8 @@ async function saveSubscription(e){
   const id=document.getElementById('subscriptionId').value;
   const currency=document.getElementById('subscriptionCurrency').value||'NOK';
   const previous=id?subscriptions.find(x=>x.id===id):null;
-  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency,frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked};
+  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency,frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked,createdAt:previous?.createdAt||new Date().toISOString()};
+  if(previous?.lastPaidForDate)obj.lastPaidForDate=previous.lastPaidForDate;
   if(currency==='NOK'){obj.nokRate=1;obj.nokAmount=amount;obj.rateDate=new Date().toISOString().slice(0,10);}
   else if(previous && previous.currency===currency && Number(previous.amount)===amount && Number(previous.nokRate)>0 && Number(previous.nokAmount)>0){
     obj.nokRate=Number(previous.nokRate);obj.nokAmount=Number(previous.nokAmount);obj.rateDate=previous.rateDate||'';
@@ -1546,8 +1601,9 @@ async function recordSubscriptionPayment(id){
   if(!confirm('Registrere «'+s.name+'» som betalt og legge betalingen inn som en utgift på '+accountLabel(s.accountId)+'?'))return;
   const previousNextDate=s.nextDate||paidDate;
   tx.push({id:uid(),desc:s.name,amount,currency:s.currency||'NOK',rate,nokAmount,actualNok:nokAmount,type:'expense',cat:s.cat||'Annet',accountId:s.accountId,date:paidDate,subscriptionId:s.id,subscriptionPaymentForDate:previousNextDate,subscriptionPreviousNextDate:previousNextDate,source:'subscriptionPayment'});
+  s.lastPaidForDate=previousNextDate;
   const next=subscriptionNextDate(s)||new Date();
-  let nextDate=advanceSubscriptionDate(next,s.frequency);while(nextDate<new Date(new Date().setHours(0,0,0,0)))nextDate=advanceSubscriptionDate(nextDate,s.frequency);
+  const nextDate=advanceSubscriptionDate(next,s.frequency);
   s.nextDate=nextDate.toISOString().slice(0,10);
   save();render();
 }
@@ -1571,8 +1627,10 @@ function renderSubscriptions(){
   const sorted=active.slice().sort((a,b)=>String(a.nextDate||'').localeCompare(String(b.nextDate||'')));
   list.innerHTML=sorted.map(s=>{
     const d=subscriptionNextDate(s), freq=s.frequency==='yearly'?'Årlig':s.frequency==='semiannual'?'Hver 6. måned':s.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
+    const todayKey=new Date().toISOString().slice(0,10);
+    const dueText=d?(String(s.nextDate||'')<todayKey?'Forfalt: ':'Neste trekk: '):'Neste trekk: ';
     const display=s.currency&&s.currency!=='NOK'?fmtN(s.amount)+' '+s.currency+' · NOK-estimat '+kr(billNokEstimate(s)):kr(s.amount);
-    return '<div class="row"><div class="rowtop"><b>📱 '+esc(s.name)+'</b><strong>'+display+'</strong></div><div class="muted">'+esc(freq)+' · '+esc(accountLabel(s.accountId))+' · Neste trekk: <b>'+(d?d.toLocaleDateString('nb-NO'):'–')+'</b></div><div style="margin-top:7px"><button class="primary" style="float:right;padding:5px 8px" onclick="recordSubscriptionPayment(\''+s.id+'\')">✅ Registrer betaling</button><button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openSubscription(\''+s.id+'\')">✏️ Rediger</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteSubscription(\''+s.id+'\')">Slett</button></div></div>';
+    return '<div class="row"><div class="rowtop"><b>📱 '+esc(s.name)+'</b><strong>'+display+'</strong></div><div class="muted">'+esc(freq)+' · '+esc(accountLabel(s.accountId))+' · '+dueText+'<b>'+(d?d.toLocaleDateString('nb-NO'):'–')+'</b></div><div style="margin-top:7px"><button class="primary" style="float:right;padding:5px 8px" onclick="recordSubscriptionPayment(\''+s.id+'\')">✅ Registrer betaling</button><button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openSubscription(\''+s.id+'\')">✏️ Rediger</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteSubscription(\''+s.id+'\')">Slett</button></div></div>';
   }).join('')||'<div class="empty">Ingen aktive abonnementer ennå.</div>';
   if(!subscriptionRateUpgradeRunning) setTimeout(ensureSubscriptionRates,0);
 }
@@ -2697,7 +2755,7 @@ async function enterApp(){
   document.getElementById('authScreen').classList.add('hide');
   document.getElementById('appShell').classList.remove('hide');
   let savedTab='overview';
-  try{savedTab=sessionStorage.getItem('mo7_current_tab')||'overview'}catch(e){}
+  try{savedTab=sessionStorage.getItem('mo7_current_tab')||localStorage.getItem('mo7_current_tab')||'overview'}catch(e){try{savedTab=localStorage.getItem('mo7_current_tab')||'overview'}catch(e2){}}
   const savedEl=document.getElementById(savedTab);
   const savedButton=[...document.querySelectorAll('.tab')].find(x=>String(x.getAttribute('onclick')||'').includes("show('"+savedTab+"'"));
   if(savedEl) show(savedTab,savedButton||document.querySelector('.tab')); else show('overview',document.querySelector('.tab'));
