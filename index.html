@@ -1123,15 +1123,7 @@ function save(){
   localStorage.setItem('mo7_data',JSON.stringify({
     creditCards:data.creditCards||[],
     creditPurchases:data.creditPurchases||[],
-    subscriptions:(data.subscriptions||[]).map(s=>{
-      if((s?.currency||'NOK')==='NOK')return {...s,nokRate:1,nokAmount:Number(s.amount)||0,nokRateDate:new Date().toISOString().slice(0,10)};
-      const hasStored=Number(s?.nokRate)>0&&Number(s?.nokAmount)>0;
-      if(hasStored)return {...s};
-      const date=new Date().toISOString().slice(0,10);
-      const cached=localStorage.getItem(rateKey(s.currency,date));
-      const rate=Number(cached);
-      return rate>0?{...s,nokRate:rate,nokAmount:Math.round(Number(s.amount)*rate*100)/100,nokRateDate:date}:{...s};
-    }),
+    subscriptions:data.subscriptions||[],
     loans:data.loans||[],
     assets:data.assets||[],
     spendSettings:data.spendSettings||{buffer:0}
@@ -1141,7 +1133,7 @@ function save(){
 const kr=n=>new Intl.NumberFormat('nb-NO',{style:'currency',currency:'NOK',maximumFractionDigits:0}).format(n);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const persist=()=>{localStorage.setItem(K.tx,JSON.stringify(tx));localStorage.setItem(K.cat,JSON.stringify(cats));localStorage.setItem(K.acc,JSON.stringify(accounts));localStorage.setItem(K.bud,JSON.stringify(bud));localStorage.setItem(K.goal,JSON.stringify(goals));localStorage.setItem(K.transfer,JSON.stringify(transfers));localStorage.setItem(K.bill,JSON.stringify(bills));localStorage.setItem(K.subscription,JSON.stringify(subscriptions)); if(!window.__restoringCloud) markLocalDirty();};
-function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');closeMore();if(id==='analytics')requestAnimationFrame(()=>renderAnalytics())}
+function toggleMore(e){e.stopPropagation();document.getElementById('moreMenu').classList.toggle('open')} function closeMore(){document.getElementById('moreMenu').classList.remove('open')} document.addEventListener('click',e=>{if(!e.target.closest('.nav-more'))closeMore()}); function show(id,b){document.querySelectorAll('main>div,main>section').forEach(x=>{if(x.id!=='tab-sync')x.classList.add('hide')});const el=document.getElementById(id);if(el)el.classList.remove('hide');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');if(b&&b.dataset.more)document.getElementById('moreBtn').classList.add('active');else document.getElementById('moreBtn').classList.remove('active');closeMore();try{sessionStorage.setItem('mo7_current_tab',id)}catch(e){}if(id==='analytics')requestAnimationFrame(()=>renderAnalytics())}
 function accountLabel(id){let a=accounts.find(x=>x.id===id);return a?a.bank+' – '+a.name:'Ikke valgt'}
 function fillSelects(){
 cat.innerHTML=cats.map(c=>'<option>'+esc(c)+'</option>').join('')+'<option value="__new">➕ Ny kategori...</option>';
@@ -1474,16 +1466,13 @@ function nextDue(b){
 }
 function billNokEstimate(b){
   const c=b.currency||'NOK'; if(c==='NOK') return Number(b.amount)||0;
+  if(Number(b?.nokAmount)>0) return Number(b.nokAmount);
+  if(Number(b?.nokRate)>0) return Math.round(Number(b.amount)*Number(b.nokRate)*100)/100;
   const cached=localStorage.getItem(rateKey(c,new Date().toISOString().slice(0,10)));
   return cached?Math.round(Number(b.amount)*Number(cached)*100)/100:Number(b.amount)||0;
 }
-function subscriptionNokEstimate(s){
-  const stored=Number(s?.nokAmount);
-  if(Number.isFinite(stored)&&stored>0)return stored;
-  return billNokEstimate(s);
-}
 function subscriptionMonthlyAmount(s){
-  const a=subscriptionNokEstimate(s);
+  const a=billNokEstimate(s);
   if(s.frequency==='yearly')return a/12;
   if(s.frequency==='semiannual')return a/6;
   if(s.frequency==='quarterly')return a/3;
@@ -1529,18 +1518,15 @@ async function saveSubscription(e){
   if(!(amount>0)){alert('Skriv inn et beløp større enn 0.');return}
   const id=document.getElementById('subscriptionId').value;
   const currency=document.getElementById('subscriptionCurrency').value||'NOK';
-  const today=new Date().toISOString().slice(0,10);
-  let nokRate=currency==='NOK'?1:null, nokAmount=currency==='NOK'?amount:null;
-  if(currency!=='NOK'){
-    try{
-      nokRate=await fetchNokRate(currency,today);
-      nokAmount=Math.round(amount*nokRate*100)/100;
-    }catch(err){
-      alert('Kunne ikke hente valutakurs for abonnementet: '+err.message);
-      return;
-    }
+  const previous=id?subscriptions.find(x=>x.id===id):null;
+  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency,frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked};
+  if(currency==='NOK'){obj.nokRate=1;obj.nokAmount=amount;obj.rateDate=new Date().toISOString().slice(0,10);}
+  else if(previous && previous.currency===currency && Number(previous.amount)===amount && Number(previous.nokRate)>0 && Number(previous.nokAmount)>0){
+    obj.nokRate=Number(previous.nokRate);obj.nokAmount=Number(previous.nokAmount);obj.rateDate=previous.rateDate||'';
+  }else{
+    try{const rateDate=new Date().toISOString().slice(0,10);const rate=await fetchNokRate(currency,rateDate);obj.nokRate=rate;obj.nokAmount=Math.round(amount*rate*100)/100;obj.rateDate=rateDate;}
+    catch(err){alert('Kunne ikke hente valutakursen fra Norges Bank. Abonnementet ble ikke lagret.');return}
   }
-  const obj={id:id||uid(),name:document.getElementById('subscriptionName').value.trim(),amount,currency,frequency:document.getElementById('subscriptionFrequency').value,nextDate:document.getElementById('subscriptionNextDate').value,cat:document.getElementById('subscriptionCat').value,accountId,active:document.getElementById('subscriptionActive').checked,nokRate,nokAmount,nokRateDate:today};
   if(id){subscriptions=subscriptions.map(x=>x.id===id?obj:x)}else subscriptions.push(obj);
   persist();save();closeM('subscriptionModal');e.target.reset();render();
 }
@@ -1565,6 +1551,15 @@ async function recordSubscriptionPayment(id){
   s.nextDate=nextDate.toISOString().slice(0,10);
   save();render();
 }
+let subscriptionRateUpgradeRunning=false;
+async function ensureSubscriptionRates(){
+  if(subscriptionRateUpgradeRunning)return;
+  const missing=subscriptions.filter(s=>s.active!==false && (s.currency||'NOK')!=='NOK' && !(Number(s.nokRate)>0&&Number(s.nokAmount)>0));
+  if(!missing.length)return;
+  subscriptionRateUpgradeRunning=true;
+  try{const rateDate=new Date().toISOString().slice(0,10);let changed=false;for(const s of missing){try{const rate=await fetchNokRate(s.currency,rateDate);s.nokRate=rate;s.nokAmount=Math.round(Number(s.amount||0)*rate*100)/100;s.rateDate=rateDate;changed=true;}catch(e){}}if(changed){persist();save();renderSubscriptions();}}finally{subscriptionRateUpgradeRunning=false}
+}
+
 function renderSubscriptions(){
   const list=document.getElementById('subscriptionsList'),monthlyEl=document.getElementById('subscriptionMonthlyTotal'),yearlyEl=document.getElementById('subscriptionYearlyTotal');
   if(!list)return;
@@ -1576,9 +1571,10 @@ function renderSubscriptions(){
   const sorted=active.slice().sort((a,b)=>String(a.nextDate||'').localeCompare(String(b.nextDate||'')));
   list.innerHTML=sorted.map(s=>{
     const d=subscriptionNextDate(s), freq=s.frequency==='yearly'?'Årlig':s.frequency==='semiannual'?'Hver 6. måned':s.frequency==='quarterly'?'Hver 3. måned':'Månedlig';
-    const display=s.currency&&s.currency!=='NOK'?fmtN(s.amount)+' '+s.currency+' · NOK-estimat '+kr(subscriptionNokEstimate(s)):kr(s.amount);
+    const display=s.currency&&s.currency!=='NOK'?fmtN(s.amount)+' '+s.currency+' · NOK-estimat '+kr(billNokEstimate(s)):kr(s.amount);
     return '<div class="row"><div class="rowtop"><b>📱 '+esc(s.name)+'</b><strong>'+display+'</strong></div><div class="muted">'+esc(freq)+' · '+esc(accountLabel(s.accountId))+' · Neste trekk: <b>'+(d?d.toLocaleDateString('nb-NO'):'–')+'</b></div><div style="margin-top:7px"><button class="primary" style="float:right;padding:5px 8px" onclick="recordSubscriptionPayment(\''+s.id+'\')">✅ Registrer betaling</button><button class="secondary" style="float:right;padding:5px 8px;margin-right:5px" onclick="openSubscription(\''+s.id+'\')">✏️ Rediger</button><button class="danger" style="float:right;padding:5px 8px;margin-right:5px" onclick="deleteSubscription(\''+s.id+'\')">Slett</button></div></div>';
   }).join('')||'<div class="empty">Ingen aktive abonnementer ennå.</div>';
+  if(!subscriptionRateUpgradeRunning) setTimeout(ensureSubscriptionRates,0);
 }
 
 function renderBills(){
@@ -2513,12 +2509,16 @@ function mergeSnapshots(local,cloud){
     savingsGoals:mergeById(local.savingsGoals,cloud.savingsGoals,x=>x?.id||[x?.name,x?.target].join('|')),
     transfers:mergeById(local.transfers,cloud.transfers,x=>x?.id||[x?.date,x?.from,x?.to,x?.amount].join('|')),
     recurringBills:mergeById(local.recurringBills,cloud.recurringBills,x=>x?.id||[x?.name,x?.dueDate,x?.amount].join('|')),
-    subscriptions:mergeById(local.subscriptions,cloud.subscriptions,x=>x?.id||[x?.name,x?.nextDate,x?.amount].join('|')).map(x=>{
-      const key=y=>String(y?.id||[y?.name,y?.nextDate,y?.amount].join('|'));
-      const l=arr(local.subscriptions).find(y=>key(y)===key(x));
-      const c=arr(cloud.subscriptions).find(y=>key(y)===key(x));
-      return {...x, nokRate:(Number(l?.nokRate)>0?l.nokRate:(Number(c?.nokRate)>0?c.nokRate:x?.nokRate)), nokAmount:(Number(l?.nokAmount)>0?l.nokAmount:(Number(c?.nokAmount)>0?c.nokAmount:x?.nokAmount)), nokRateDate:l?.nokRateDate||c?.nokRateDate||x?.nokRateDate};
-    }),
+    subscriptions:(()=>{
+      const merged=mergeById(local.subscriptions,cloud.subscriptions,x=>x?.id||[x?.name,x?.nextDate,x?.amount].join('|'));
+      const localArr=arr(local.subscriptions), cloudArr=arr(cloud.subscriptions);
+      return merged.map(item=>{
+        const l=localArr.find(x=>String(x?.id||'')===String(item?.id||''));
+        const c=cloudArr.find(x=>String(x?.id||'')===String(item?.id||''));
+        if(l&&c && !(Number(l.nokRate)>0&&Number(l.nokAmount)>0) && Number(c.nokRate)>0&&Number(c.nokAmount)>0) return {...item,nokRate:Number(c.nokRate),nokAmount:Number(c.nokAmount),rateDate:c.rateDate||''};
+        return item;
+      });
+    })(),
     creditCards:mergeById(local.creditCards,cloud.creditCards,x=>x?.id||x?.name),
     creditPurchases:mergeById(local.creditPurchases,cloud.creditPurchases,x=>x?.id||[x?.provider,x?.name].join('|')),
     loans:mergeById(local.loans,cloud.loans,x=>x?.id||x?.name),
@@ -2542,7 +2542,7 @@ async function cloudBackup(opts={auto:false}){
       const merged=mergeSnapshots(payload,row.data);
       window.__restoringCloud=true;
       tx=merged.transactions; cats=merged.categories; accounts=merged.accounts; bud=merged.budgets;
-      goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills;
+      goals=merged.savingsGoals; transfers=merged.transfers; bills=merged.recurringBills; subscriptions=merged.subscriptions;
       data.creditCards=merged.creditCards; data.creditPurchases=merged.creditPurchases; data.loans=merged.loans; data.assets=merged.assets;
       data.spendSettings=merged.spendSettings;
       overviewPrefs=merged.overviewPrefs||loadOverviewPrefs();
@@ -2696,7 +2696,11 @@ document.getElementById('testNhost').addEventListener('click',async()=>{
 async function enterApp(){
   document.getElementById('authScreen').classList.add('hide');
   document.getElementById('appShell').classList.remove('hide');
-  show('overview',document.querySelector('.tab'));
+  let savedTab='overview';
+  try{savedTab=sessionStorage.getItem('mo7_current_tab')||'overview'}catch(e){}
+  const savedEl=document.getElementById(savedTab);
+  const savedButton=[...document.querySelectorAll('.tab')].find(x=>String(x.getAttribute('onclick')||'').includes("show('"+savedTab+"'"));
+  if(savedEl) show(savedTab,savedButton||document.querySelector('.tab')); else show('overview',document.querySelector('.tab'));
   const badge=document.getElementById('syncBadge');
   if(badge) badge.textContent='☁️ Innlogget';
   render();
@@ -3069,7 +3073,6 @@ try{el('amount').addEventListener('input',()=>{clearTimeout(window.__curTimer);w
 </script>
 
 <script>
-/* v78: shared subscription NOK estimates are stored and synced */
 /* v69: consistent bottom placement for page customization links */
 /* v67: customization links at bottom of reorderable pages */
 /* v66: reorderable Gjeld & formue + Faste regninger sections */
